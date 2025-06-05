@@ -1,3 +1,10 @@
+/* Modern, responsive Material-UI form styles */
+body {
+  background: #f4f6f8;
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
 .App {
   text-align: center;
 }
@@ -35,4 +42,16 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.MuiCard-root {
+  transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.MuiStepLabel-label {
+  font-weight: 500;
+}
+
+.MuiAvatar-root {
+  margin-bottom: 8px;
 }
