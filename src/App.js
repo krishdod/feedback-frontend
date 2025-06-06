@@ -620,7 +620,7 @@ function App() {
       try {
         console.log('Submitting feedback...', form); // Debug log
 
-        const response = await fetch('http://localhost:5000/api/submit-feedback', {
+        const response = await fetch('https://feedback-backend.onrender.com/api/submit-feedback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
