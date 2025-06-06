@@ -8,7 +8,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
 app.use(bodyParser.json());
 
 // Add request logging middleware
@@ -20,10 +24,12 @@ app.use((req, res, next) => {
 // Google Sheets setup
 let sheets;
 try {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: 'credentials.json',
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  const auth = new google.auth.JWT(
+    process.env.GOOGLE_SERVICE_EMAIL,
+    null,
+    process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    ['https://www.googleapis.com/auth/spreadsheets']
+  );
   sheets = google.sheets({ version: 'v4', auth });
   console.log('Google Sheets API initialized successfully');
 } catch (error) {
