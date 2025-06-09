@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container, Typography, Box, TextField, Grid, Paper, Radio, Checkbox, Button, Card, CardContent, useMediaQuery, Collapse, IconButton, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Slide, Avatar, Table, TableBody, TableCell, TableHead, TableRow, Switch, FormControlLabel, Fade, Zoom, useScrollTrigger, Link, Divider
 } from '@mui/material';
@@ -19,6 +19,8 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LanguageIcon from '@mui/icons-material/Language';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 const coveredTopicsList = [
   'Introduction',
@@ -239,7 +241,7 @@ function SectionCard({ title, expanded, onToggle, icon, children }) {
               {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
           </Box>
-          <Collapse in={expanded} timeout={400} unmountOnExit>
+          {expanded && (
             <Box 
               sx={{ 
                 px: 3, 
@@ -249,7 +251,7 @@ function SectionCard({ title, expanded, onToggle, icon, children }) {
             >
               {typeof children === 'function' ? children() : children}
             </Box>
-          </Collapse>
+          )}
         </CardContent>
       </Card>
     </Fade>
@@ -272,15 +274,92 @@ const likertMatrixLabels = [
   'Very Good',
 ];
 
+const ScrollHint = () => (
+  <Box sx={{
+    display: { xs: 'flex', sm: 'none' },
+    alignItems: 'center',
+    justifyContent: 'center',
+    mb: 1,
+    color: 'text.secondary',
+    fontSize: 14,
+    width: '100%',
+    gap: 1,
+  }}>
+    <span>Swipe to see more</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M8 5l8 7-8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </Box>
+);
+
 function LikertMatrix({ questions, section, formSection, handleChange }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const tableContainerRef = useRef(null);
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(false);
+  const scrollDebounce = useRef();
+
+  // Check scroll position to show/hide buttons
+  const checkScroll = () => {
+    if (tableContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      setShowLeft(scrollLeft > 10);
+      setShowRight(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    if (isMobile && tableContainerRef.current) {
+      checkScroll();
+      // Debounced scroll event for smoothness
+      const handleScroll = () => {
+        clearTimeout(scrollDebounce.current);
+        scrollDebounce.current = setTimeout(checkScroll, 50);
+      };
+      tableContainerRef.current.addEventListener('scroll', handleScroll);
+      // Ensure table starts at left
+      tableContainerRef.current.scrollLeft = 0;
+      return () => {
+        tableContainerRef.current.removeEventListener('scroll', handleScroll);
+        clearTimeout(scrollDebounce.current);
+      };
+    }
+  }, [isMobile]);
+
+  const handleScrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <Box sx={{ width: '100%', overflowX: 'auto' }}>
+    <Box sx={{ width: '100%', overflowX: 'auto', position: 'relative', scrollBehavior: 'smooth' }} ref={tableContainerRef}>
+      {isMobile && (
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 1,
+          color: 'text.secondary',
+          fontSize: 14,
+          width: '100%',
+          gap: 1,
+        }}>
+          <span>Swipe to see more</span>
+          <ArrowForwardIosIcon fontSize="small" />
+        </Box>
+      )}
       <Table sx={{ minWidth: isMobile ? 500 : 700 }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ background: theme.palette.background.paper }}></TableCell>
+            <TableCell sx={{ background: theme.palette.background.paper, position: 'sticky', left: 0, zIndex: 1, minWidth: 120, boxShadow: isMobile ? 2 : 0 }}></TableCell>
             {likertMatrixLabels.map(label => (
               <TableCell align="center" key={label} sx={{ fontWeight: 600, color: theme.palette.text.primary, background: theme.palette.background.paper }}>{label}</TableCell>
             ))}
@@ -289,7 +368,7 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
         <TableBody>
           {questions.map((q, idx) => (
             <TableRow key={q} hover sx={{ transition: 'background 0.2s', '&:hover': { background: theme.palette.action.hover } }}>
-              <TableCell sx={{ fontWeight: 500, color: theme.palette.text.primary, background: theme.palette.background.paper }}>{q}<RequiredStar /></TableCell>
+              <TableCell sx={{ fontWeight: 500, color: theme.palette.text.primary, background: theme.palette.background.paper, minWidth: 120, position: 'sticky', left: 0, zIndex: 1, boxShadow: isMobile ? 2 : 0 }}>{q}<RequiredStar /></TableCell>
               {likertMatrixLabels.map((label, colIdx) => (
                 <TableCell align="center" key={label} sx={{ background: theme.palette.background.paper }}>
                   <Radio
@@ -303,7 +382,7 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
                       color: theme.palette.secondary.main,
                       '&.Mui-checked': {
                         color: theme.palette.primary.main,
-                        boxShadow: `0 0 0 4px ${theme.palette.primary.main}22` // subtle glow
+                        boxShadow: `0 0 0 4px ${theme.palette.primary.main}22`
                       },
                       transition: 'color 0.2s, box-shadow 0.2s',
                     }}
@@ -314,6 +393,60 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
           ))}
         </TableBody>
       </Table>
+      {isMobile && (
+        <>
+          {/* Right scroll button */}
+          {showRight && (
+            <IconButton
+              onClick={handleScrollRight}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                right: 8,
+                transform: 'translateY(-50%)',
+                zIndex: 3,
+                bgcolor: 'transparent',
+                boxShadow: 4,
+                pointerEvents: 'auto',
+                display: { xs: 'flex', sm: 'none' },
+                transition: 'opacity 0.3s',
+                opacity: showRight ? 1 : 0,
+                borderRadius: 2,
+                p: 1.2,
+              }}
+              size="large"
+              aria-label="Scroll right"
+            >
+              <ArrowForwardIosIcon fontSize="medium" />
+            </IconButton>
+          )}
+          {/* Left scroll button */}
+          {showLeft && (
+            <IconButton
+              onClick={handleScrollLeft}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: 8,
+                transform: 'translateY(-50%)',
+                zIndex: 3,
+                bgcolor: 'transparent',
+                boxShadow: 4,
+                pointerEvents: 'auto',
+                display: { xs: 'flex', sm: 'none' },
+                transition: 'opacity 0.3s',
+                opacity: showLeft ? 1 : 0,
+                borderRadius: 2,
+                p: 1.2,
+              }}
+              size="large"
+              aria-label="Scroll left"
+            >
+              <ArrowBackIosNewIcon fontSize="medium" />
+            </IconButton>
+          )}
+        </>
+      )}
     </Box>
   );
 }
@@ -458,11 +591,17 @@ function Footer() {
           {/* Company Info */}
           <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <img
-                src={theme.palette.mode === 'dark' ? logoDark : logoLight}
-                alt="Radiance Tech LLC Logo"
-                style={{ height: 72, marginBottom: 20, maxWidth: '100%', boxShadow: 'none' }}
-              />
+              <picture>
+                <source srcSet={theme.palette.mode === 'dark' ? '/logo-dark.webp' : '/logo-light.webp'} type="image/webp" />
+                <img
+                  src={theme.palette.mode === 'dark' ? logoDark : logoLight}
+                  alt="Radiance Tech LLC Logo"
+                  width={200}
+                  height={80}
+                  style={{ height: 72, marginBottom: 20, maxWidth: '100%', boxShadow: 'none' }}
+                  loading="lazy"
+                />
+              </picture>
               <Typography variant="body2" sx={{ mb: 2, maxWidth: 240, mx: { xs: 'auto', md: 0 }, color: 'text.secondary' }}>
                 Empowering businesses with innovative technology solutions and expert training programs.
               </Typography>
@@ -578,6 +717,7 @@ function App() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [error, setError] = useState(null);
   const [themeMode, setThemeMode] = useState('light');
+  const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -617,6 +757,7 @@ function App() {
   const handleDialogClose = async (confirmed) => {
     setShowConfirmDialog(false);
     if (confirmed) {
+      setLoading(true);
       try {
         console.log('Submitting feedback...', form); // Debug log
 
@@ -643,6 +784,8 @@ function App() {
       } catch (error) {
         console.error('Error submitting feedback:', error);
         setError(error.message || 'Failed to submit feedback. Please try again.');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -762,7 +905,7 @@ function App() {
           <Paper 
             elevation={6} 
             sx={{ 
-              p: isMobile ? 2 : 5, 
+              p: { xs: 2, sm: 4, md: 6 }, 
               borderRadius: 4, 
               background: themeMode === 'dark' ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
               backdropFilter: 'blur(10px)',
@@ -801,15 +944,9 @@ function App() {
                 <img
                   src={themeMode === 'dark' ? logoDark : logoLight}
                   alt="Radiance Tech LLC Logo"
-                  style={{ 
-                    height: '100%', 
-                    width: '100%', 
-                    maxWidth: 320,
-                    objectFit: 'contain', 
-                    display: 'block', 
-                    background: 'transparent', 
-                    margin: '0 auto' 
-                  }}
+                  width={200}
+                  height={80}
+                  style={{ height: 72, marginBottom: 20, maxWidth: '100%', boxShadow: 'none' }}
                 />
               </Box>
               <FormControlLabel
@@ -826,19 +963,19 @@ function App() {
               <SectionCard title="Details" expanded={expanded[0]} onToggle={() => handleExpandToggle(0)} icon={<PersonIcon />}>
                 <div id="section-card-0" />
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <TextField label="Name" fullWidth required value={form.details.name} onChange={e => handleChange('details', 'name', e.target.value)} />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <TextField label="Email" type="email" fullWidth required value={form.details.email} onChange={e => handleChange('details', 'email', e.target.value)} />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <TextField label="Role" fullWidth required value={form.details.role} onChange={e => { handleChange('details', 'role', e.target.value); handleChange('details', 'title', e.target.value); }} />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid xs={12} sm={6} md={6}>
                     <TextField label="Training Title" fullWidth required value={form.details.title} onChange={e => handleChange('details', 'title', e.target.value)} />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid xs={12} sm={6} md={6}>
                     <TextField label="Instructor Name" fullWidth required value={form.details.instructor} onChange={e => handleChange('details', 'instructor', e.target.value)} />
                   </Grid>
                 </Grid>
@@ -931,6 +1068,8 @@ function App() {
                   type="submit" 
                   variant="contained" 
                   size="large" 
+                  disabled={loading}
+                  startIcon={loading ? null : null}
                   sx={{ 
                     px: 5, 
                     py: 1.5, 
@@ -947,7 +1086,7 @@ function App() {
                     transition: 'all 0.3s ease',
                   }}
                 >
-                  Submit Feedback
+                  {loading ? "Submitting..." : "Submit Feedback"}
                 </Button>
               </Box>
             </Box>
