@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:3000', 'https://your-vercel-domain.vercel.app'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
