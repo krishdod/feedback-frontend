@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   Container, Typography, Box, TextField, Grid, Paper, Radio, Checkbox, Button, Card, CardContent, useMediaQuery, Collapse, IconButton, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Slide, Avatar, Table, TableBody, TableCell, TableHead, TableRow, Switch, FormControlLabel, Fade, Zoom, useScrollTrigger, Link, Divider
 } from '@mui/material';
@@ -12,8 +12,8 @@ import StarIcon from '@mui/icons-material/Star';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import logoLight from './assets/radiance_logo_black_trans-removebg-preview_enhanced.png';
-import logoDark from './assets/White on Transparent.png';
+import logoLight from './assets/radiance_logo_light.png';
+import logoDark from './assets/radiance_logo_dark.png';
 import { keyframes } from '@mui/system';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -21,6 +21,7 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import LanguageIcon from '@mui/icons-material/Language';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { ThemeContext } from './ThemeContext';
 
 const coveredTopicsList = [
   'Introduction',
@@ -162,6 +163,8 @@ function SectionCard({ title, expanded, onToggle, icon, children }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  console.log('Theme mode:', theme.palette.mode, 'Logo:', theme.palette.mode === 'dark' ? logoDark : logoLight);
+
   return (
     <Fade in timeout={800}>
       <Card 
@@ -296,48 +299,13 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const tableContainerRef = useRef(null);
-  const [showLeft, setShowLeft] = useState(false);
-  const [showRight, setShowRight] = useState(false);
-  const scrollDebounce = useRef();
-
-  // Check scroll position to show/hide buttons
-  const checkScroll = () => {
-    if (tableContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
-      setShowLeft(scrollLeft > 10);
-      setShowRight(scrollLeft + clientWidth < scrollWidth - 10);
-    }
-  };
 
   useEffect(() => {
     if (isMobile && tableContainerRef.current) {
-      checkScroll();
-      // Debounced scroll event for smoothness
-      const handleScroll = () => {
-        clearTimeout(scrollDebounce.current);
-        scrollDebounce.current = setTimeout(checkScroll, 50);
-      };
-      tableContainerRef.current.addEventListener('scroll', handleScroll);
       // Ensure table starts at left
       tableContainerRef.current.scrollLeft = 0;
-      return () => {
-        tableContainerRef.current.removeEventListener('scroll', handleScroll);
-        clearTimeout(scrollDebounce.current);
-      };
     }
   }, [isMobile]);
-
-  const handleScrollRight = () => {
-    if (tableContainerRef.current) {
-      tableContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
-
-  const handleScrollLeft = () => {
-    if (tableContainerRef.current) {
-      tableContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-  };
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', position: 'relative', scrollBehavior: 'smooth' }} ref={tableContainerRef}>
@@ -393,60 +361,6 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
           ))}
         </TableBody>
       </Table>
-      {isMobile && (
-        <>
-          {/* Right scroll button */}
-          {showRight && (
-            <IconButton
-              onClick={handleScrollRight}
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                right: 8,
-                transform: 'translateY(-50%)',
-                zIndex: 3,
-                bgcolor: 'transparent',
-                boxShadow: 4,
-                pointerEvents: 'auto',
-                display: { xs: 'flex', sm: 'none' },
-                transition: 'opacity 0.3s',
-                opacity: showRight ? 1 : 0,
-                borderRadius: 2,
-                p: 1.2,
-              }}
-              size="large"
-              aria-label="Scroll right"
-            >
-              <ArrowForwardIosIcon fontSize="medium" />
-            </IconButton>
-          )}
-          {/* Left scroll button */}
-          {showLeft && (
-            <IconButton
-              onClick={handleScrollLeft}
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: 8,
-                transform: 'translateY(-50%)',
-                zIndex: 3,
-                bgcolor: 'transparent',
-                boxShadow: 4,
-                pointerEvents: 'auto',
-                display: { xs: 'flex', sm: 'none' },
-                transition: 'opacity 0.3s',
-                opacity: showLeft ? 1 : 0,
-                borderRadius: 2,
-                p: 1.2,
-              }}
-              size="large"
-              aria-label="Scroll left"
-            >
-              <ArrowBackIosNewIcon fontSize="medium" />
-            </IconButton>
-          )}
-        </>
-      )}
     </Box>
   );
 }
@@ -562,6 +476,7 @@ function SuccessDialog({ open, onClose }) {
 }
 
 function Footer() {
+  const { theme: themeMode } = useContext(ThemeContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -572,10 +487,10 @@ function Footer() {
         py: { xs: 4, sm: 6 },
         px: { xs: 2, sm: 4 },
         mt: 'auto',
-        background: theme.palette.mode === 'dark'
+        background: themeMode === 'dark'
           ? 'linear-gradient(180deg, #232526 0%, #414345 100%)'
           : 'linear-gradient(180deg, #e3eeff 0%, #f3e7e9 100%)',
-        color: theme.palette.mode === 'dark' ? '#fff' : '#232526',
+        color: themeMode === 'dark' ? '#fff' : '#232526',
         borderTop: '1px solid',
         borderColor: 'divider',
         boxShadow: 8,
@@ -591,17 +506,22 @@ function Footer() {
           {/* Company Info */}
           <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <picture>
-                <source srcSet={theme.palette.mode === 'dark' ? '/logo-dark.webp' : '/logo-light.webp'} type="image/webp" />
-                <img
-                  src={theme.palette.mode === 'dark' ? logoDark : logoLight}
-                  alt="Radiance Tech LLC Logo"
-                  width={200}
-                  height={80}
-                  style={{ height: 72, marginBottom: 20, maxWidth: '100%', boxShadow: 'none' }}
-                  loading="lazy"
-                />
-              </picture>
+              <img
+                src={themeMode === 'dark' ? logoDark : logoLight}
+                alt="Radiance Tech LLC Logo"
+                style={{
+                  height: 72,
+                  marginBottom: 20,
+                  maxWidth: '100%',
+                  boxShadow: 'none',
+                  filter: themeMode === 'dark' ? 'brightness(0.9) contrast(1.1)' : 'none',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.02)',
+                    filter: themeMode === 'dark' ? 'brightness(1) contrast(1.2)' : 'brightness(1.05)',
+                  }
+                }}
+              />
               <Typography variant="body2" sx={{ mb: 2, maxWidth: 240, mx: { xs: 'auto', md: 0 }, color: 'text.secondary' }}>
                 Empowering businesses with innovative technology solutions and expert training programs.
               </Typography>
@@ -710,13 +630,13 @@ function Footer() {
 }
 
 function App() {
+  const { theme: themeMode, toggleTheme } = useContext(ThemeContext);
   const [form, setForm] = useState(initialState);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(Array(steps.length).fill(true));
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [error, setError] = useState(null);
-  const [themeMode, setThemeMode] = useState('light');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -761,7 +681,7 @@ function App() {
       try {
         console.log('Submitting feedback...', form); // Debug log
 
-        const response = await fetch('https://feedback-backend.onrender.com/api/submit-feedback', {
+        const response = await fetch('http://localhost:5000/api/submit-feedback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -790,7 +710,7 @@ function App() {
     }
   };
 
-  // Theme setup
+  // Update the theme creation to use the context theme
   const muiTheme = createTheme({
     palette: {
       mode: themeMode,
@@ -944,13 +864,28 @@ function App() {
                 <img
                   src={themeMode === 'dark' ? logoDark : logoLight}
                   alt="Radiance Tech LLC Logo"
-                  width={200}
-                  height={80}
-                  style={{ height: 72, marginBottom: 20, maxWidth: '100%', boxShadow: 'none' }}
+                  style={{
+                    height: 72,
+                    marginBottom: 20,
+                    maxWidth: '100%',
+                    boxShadow: 'none',
+                    filter: themeMode === 'dark' ? 'brightness(0.9) contrast(1.1)' : 'none',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      filter: themeMode === 'dark' ? 'brightness(1) contrast(1.2)' : 'brightness(1.05)',
+                    }
+                  }}
                 />
               </Box>
               <FormControlLabel
-                control={<Switch checked={themeMode === 'dark'} onChange={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')} color="primary" />}
+                control={
+                  <Switch 
+                    checked={themeMode === 'dark'} 
+                    onChange={toggleTheme} 
+                    color="primary" 
+                  />
+                }
                 label={themeMode === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
                 sx={{ ml: 2, userSelect: 'none' }}
               />
