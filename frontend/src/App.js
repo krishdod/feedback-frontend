@@ -81,43 +81,54 @@ const steps = [
   'Comments & Suggestions',
 ];
 
-// Optimize animations by combining them
-const animations = {
-  fadeInUp: keyframes`
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  `,
-  bounce: keyframes`
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-10px); }
-    60% { transform: translateY(-5px); }
-  `,
-  pulse: keyframes`
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  `
-};
+// Add these keyframe animations
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
-// Memoize the ScrollToTop component
-const ScrollToTop = React.memo(function ScrollToTop() {
+const bounce = keyframes`
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+`;
+
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+function ScrollToTop() {
   const trigger = useScrollTrigger({
     disableHysteresis: true,
     threshold: 100,
   });
 
-  const handleClick = React.useCallback(() => {
+  const handleClick = () => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-  }, []);
+  };
 
   return (
     <Zoom in={trigger}>
@@ -146,10 +157,9 @@ const ScrollToTop = React.memo(function ScrollToTop() {
       </Box>
     </Zoom>
   );
-});
+}
 
-// Memoize the SectionCard component
-const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle, icon, children }) {
+function SectionCard({ title, expanded, onToggle, icon, children }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -170,7 +180,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
           background: theme.palette.background.paper,
           transition: 'all 0.3s ease',
           overflow: 'hidden',
-          animation: `${animations.fadeInUp} 0.6s ease-out`,
+          animation: `${fadeInUp} 0.6s ease-out`,
         }}
       >
         <CardContent sx={{ p: 0 }}>
@@ -197,7 +207,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
                 mr: 1, 
                 color: 'secondary.main', 
                 fontSize: 28,
-                animation: `${animations.pulse} 2s infinite`,
+                animation: `${pulse} 2s infinite`,
               }}>
                 {icon}
               </Box>
@@ -226,7 +236,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
                 transition: 'all 0.3s ease',
                 transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 '&:hover': {
-                  animation: `${animations.bounce} 1s`,
+                  animation: `${bounce} 1s`,
                   backgroundColor: 'rgba(0,0,0,0.04)',
                 },
               }}
@@ -239,7 +249,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
               sx={{ 
                 px: 3, 
                 py: 2,
-                animation: `${animations.fadeInUp} 0.4s ease-out`,
+                animation: `${fadeInUp} 0.4s ease-out`,
               }}
             >
               {typeof children === 'function' ? children() : children}
@@ -249,7 +259,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
       </Card>
     </Fade>
   );
-});
+}
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -288,80 +298,36 @@ const ScrollHint = () => (
 function LikertMatrix({ questions, section, formSection, handleChange }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const tableContainerRef = useRef(null);
 
-  // Mobile layout - vertical cards
-  if (isMobile) {
-    return (
-      <Box sx={{ width: '100%' }}>
-        {questions.map((q, idx) => (
-          <Box
-            key={q}
-            sx={{
-              mb: 3,
-              p: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-              backgroundColor: 'background.paper',
-              boxShadow: 1,
-            }}
-          >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
-              {q}<RequiredStar />
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {likertMatrixLabels.map((label, colIdx) => (
-                <FormControlLabel
-                  key={label}
-                  control={
-                    <Radio
-                      checked={formSection[idx] === String(colIdx + 1)}
-                      onChange={() => handleChange(section, idx, String(colIdx + 1))}
-                      value={colIdx + 1}
-                      name={`${section}-question-${idx}`}
-                      inputProps={{ 'aria-label': label }}
-                      required={formSection[idx] === undefined || formSection[idx] === ''}
-                      sx={{
-                        color: 'secondary.main',
-                        '&.Mui-checked': {
-                          color: 'primary.main',
-                        },
-                      }}
-                    />
-                  }
-                  label={label}
-                  sx={{
-                    margin: 0,
-                    padding: '8px',
-                    borderRadius: 1,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    backgroundColor: 'background.default',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                    '&.Mui-checked': {
-                      backgroundColor: 'primary.light',
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-        ))}
-      </Box>
-    );
-  }
+  useEffect(() => {
+    if (isMobile && tableContainerRef.current) {
+      // Ensure table starts at left
+      tableContainerRef.current.scrollLeft = 0;
+    }
+  }, [isMobile]);
 
-  // Desktop layout - table
   return (
-    <Box sx={{ width: '100%', overflowX: 'auto' }}>
-      <Table sx={{ minWidth: 700 }}>
+    <Box sx={{ width: '100%', overflowX: 'auto', position: 'relative', scrollBehavior: 'smooth' }} ref={tableContainerRef}>
+      {isMobile && (
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 1,
+          color: 'text.secondary',
+          fontSize: 14,
+          width: '100%',
+          gap: 1,
+        }}>
+          <span>Swipe to see more</span>
+          <ArrowForwardIosIcon fontSize="small" />
+        </Box>
+      )}
+      <Table sx={{ minWidth: isMobile ? 500 : 700 }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ background: theme.palette.background.paper, position: 'sticky', left: 0, zIndex: 1, minWidth: 120 }}></TableCell>
+            <TableCell sx={{ background: theme.palette.background.paper, position: 'sticky', left: 0, zIndex: 1, minWidth: 120, boxShadow: isMobile ? 2 : 0 }}></TableCell>
             {likertMatrixLabels.map(label => (
               <TableCell align="center" key={label} sx={{ fontWeight: 600, color: theme.palette.text.primary, background: theme.palette.background.paper }}>{label}</TableCell>
             ))}
@@ -370,7 +336,7 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
         <TableBody>
           {questions.map((q, idx) => (
             <TableRow key={q} hover sx={{ transition: 'background 0.2s', '&:hover': { background: theme.palette.action.hover } }}>
-              <TableCell sx={{ fontWeight: 500, color: theme.palette.text.primary, background: theme.palette.background.paper, minWidth: 120, position: 'sticky', left: 0, zIndex: 1 }}>{q}<RequiredStar /></TableCell>
+              <TableCell sx={{ fontWeight: 500, color: theme.palette.text.primary, background: theme.palette.background.paper, minWidth: 120, position: 'sticky', left: 0, zIndex: 1, boxShadow: isMobile ? 2 : 0 }}>{q}<RequiredStar /></TableCell>
               {likertMatrixLabels.map((label, colIdx) => (
                 <TableCell align="center" key={label} sx={{ background: theme.palette.background.paper }}>
                   <Radio
@@ -399,57 +365,115 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
   );
 }
 
-// Dialog components
-const ConfirmDialog = ({ open, onClose, onConfirm }) => (
-  <Dialog
-    open={open}
-    onClose={() => onClose(false)}
-    TransitionComponent={Transition}
-    maxWidth="sm"
-    fullWidth
-  >
-    <DialogTitle sx={{ textAlign: 'center', fontWeight: 600 }}>
-      Confirm Submission
-    </DialogTitle>
-    <DialogContent>
-      <Typography>
-        Are you sure you want to submit this feedback? This action cannot be undone.
-      </Typography>
-    </DialogContent>
-    <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-      <Button onClick={() => onClose(false)} color="inherit">
-        Cancel
-      </Button>
-      <Button onClick={() => onConfirm(true)} variant="contained" color="primary">
-        Submit
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+function ConfirmDialog({ open, onClose, onConfirm }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={() => onClose(false)}
+      TransitionComponent={Slide}
+      TransitionProps={{ direction: "up" }}
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          padding: 2,
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          maxWidth: '400px',
+          width: '100%',
+        }
+      }}
+    >
+      <DialogTitle sx={{ textAlign: 'center', fontSize: '1.5rem' }}>
+        Confirm Submission
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
+          Are you sure you want to submit your feedback?
+        </Typography>
+        <Typography variant="body2" sx={{ textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+          Please review your responses before submitting.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 2 }}>
+        <Button 
+          onClick={() => onClose(false)} 
+          variant="outlined"
+          sx={{ 
+            color: 'white', 
+            borderColor: 'white',
+            '&:hover': {
+              borderColor: 'white',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            }
+          }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={() => onConfirm(true)} 
+          variant="contained"
+          sx={{ 
+            bgcolor: 'white', 
+            color: 'primary.main',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.9)',
+            }
+          }}
+        >
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
-const SuccessDialog = ({ open, onClose }) => (
-  <Dialog
-    open={open}
-    onClose={onClose}
-    TransitionComponent={Transition}
-    maxWidth="sm"
-    fullWidth
-  >
-    <DialogTitle sx={{ textAlign: 'center', fontWeight: 600, color: 'success.main' }}>
-      Success!
-    </DialogTitle>
-    <DialogContent>
-      <Typography>
-        Thank you for your feedback! Your response has been submitted successfully.
-      </Typography>
-    </DialogContent>
-    <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-      <Button onClick={onClose} variant="contained" color="primary">
-        Close
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+function SuccessDialog({ open, onClose }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      TransitionComponent={Slide}
+      TransitionProps={{ direction: "up" }}
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          padding: 2,
+          background: 'linear-gradient(45deg, #43cea2 30%, #185a9d 90%)',
+          color: 'white',
+          maxWidth: '400px',
+          width: '100%',
+        }
+      }}
+    >
+      <DialogTitle sx={{ textAlign: 'center', fontSize: '1.5rem' }}>
+        Thank You! 🎉
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
+          Your feedback has been successfully submitted.
+        </Typography>
+        <Typography variant="body2" sx={{ textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+          We appreciate your time and valuable input!
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+        <Button 
+          onClick={onClose} 
+          variant="contained"
+          sx={{ 
+            bgcolor: 'white', 
+            color: 'primary.main',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.9)',
+            }
+          }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 function Footer() {
   const { theme: themeMode } = useContext(ThemeContext);
@@ -480,7 +504,7 @@ function Footer() {
           justifyContent="space-between"
         >
           {/* Company Info */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
               <img
                 src={themeMode === 'dark' ? logoDark : logoLight}
@@ -576,7 +600,7 @@ function Footer() {
             </Box>
           </Grid>
         </Grid>
-        
+
         <Divider sx={{ my: 4 }} />
 
         {/* Copyright */}
@@ -650,8 +674,6 @@ function App() {
     setShowConfirmDialog(true);
   };
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
   const handleDialogClose = async (confirmed) => {
     setShowConfirmDialog(false);
     if (confirmed) {
@@ -659,7 +681,7 @@ function App() {
       try {
         console.log('Submitting feedback...', form); // Debug log
 
-        const response = await fetch(`${API_URL}/api/submit-feedback`, {
+        const response = await fetch('http://localhost:5000/api/submit-feedback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -739,7 +761,7 @@ function App() {
             '&:hover': {
               transform: 'translateY(-2px)',
               boxShadow: 8,
-              animation: `${animations.pulse} 1s infinite`,
+              animation: `${pulse} 1s infinite`,
             },
           },
         },
@@ -796,7 +818,7 @@ function App() {
             : 'linear-gradient(135deg, #f3e7e9 0%, #e3eeff 100%)', 
           py: isMobile ? 2 : 6,
           scrollBehavior: 'smooth',
-          animation: `${animations.fadeInUp} 0.8s ease-out`,
+          animation: `${fadeInUp} 0.8s ease-out`,
         }}
       >
         <Container maxWidth="md" sx={{ flex: 1, mb: { xs: 4, sm: 6, md: 8 } }}>
@@ -812,7 +834,7 @@ function App() {
                 boxShadow: 12,
                 transform: 'scale(1.01)',
               },
-              animation: `${animations.fadeInUp} 1s ease-out`,
+              animation: `${fadeInUp} 1s ease-out`,
               border: '1px solid',
               borderColor: 'divider',
             }}
@@ -837,7 +859,7 @@ function App() {
                 maxWidth: 320,
                 width: '100%',
                 justifyContent: 'center',
-                animation: `${animations.fadeInUp} 0.6s ease-out`,
+                animation: `${fadeInUp} 0.6s ease-out`,
               }}>
                 <img
                   src={themeMode === 'dark' ? logoDark : logoLight}
@@ -936,55 +958,22 @@ function App() {
               {/* Step 5: Covered Topics */}
               <SectionCard title="Covered Topics" expanded={expanded[5]} onToggle={() => handleExpandToggle(5)}>
                 <div id="section-card-5" />
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  gap: 1,
-                  mb: 2,
-                  width: '100%',
-                  overflow: 'hidden'
-                }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
                   {coveredTopicsList.map(topic => (
-                    <Box
+                    <FormControlLabel
                       key={topic}
-                      sx={{
-                        width: '100%',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        backgroundColor: 'background.paper',
-                        p: 1,
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                          transform: 'translateY(-1px)',
-                          boxShadow: 1,
-                        },
-                      }}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={form.coveredTopics.includes(topic)}
-                            onChange={() => handleTopicsChange(topic)}
-                            sx={{
-                              color: 'primary.main',
-                              '&.Mui-checked': { color: 'secondary.main' },
-                            }}
-                          />
-                        }
-                        label={topic}
-                        sx={{
-                          width: '100%',
-                          margin: 0,
-                          '& .MuiFormControlLabel-label': {
-                            fontSize: { xs: '14px', sm: '16px' },
-                            fontWeight: 500,
-                            wordBreak: 'break-word',
-                          }
-                        }}
-                      />
-                    </Box>
+                      control={
+                        <Checkbox
+                          checked={form.coveredTopics.includes(topic)}
+                          onChange={() => handleTopicsChange(topic)}
+                          sx={{
+                            color: 'primary.main',
+                            '&.Mui-checked': { color: 'secondary.main' },
+                          }}
+                        />
+                      }
+                      label={topic}
+                    />
                   ))}
                 </Box>
                 <TextField
