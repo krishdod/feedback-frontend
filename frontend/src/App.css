@@ -1,0 +1,164 @@
+/* Modern, responsive Material-UI form styles */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  min-height: 100vh;
+}
+
+.App {
+  text-align: center;
+  padding: 20px;
+  color: #333;
+}
+
+/* Enhanced Card Styles */
+.MuiCard-root {
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Enhanced Button Styles */
+.MuiButton-contained {
+  background: linear-gradient(45deg, #667eea 30%, #764ba2 90%) !important;
+  color: white !important;
+  box-shadow: 0 3px 15px rgba(102, 126, 234, 0.4) !important;
+  border-radius: 25px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.MuiButton-contained:hover {
+  background: linear-gradient(45deg, #764ba2 30%, #667eea 90%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
+}
+
+/* Enhanced TextField Styles */
+.MuiTextField-root .MuiOutlinedInput-root {
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root.Mui-focused {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* Enhanced Radio and Checkbox */
+.MuiRadio-root {
+  transition: all 0.3s ease !important;
+}
+
+.MuiRadio-root:hover {
+  transform: scale(1.1) !important;
+}
+
+.MuiCheckbox-root {
+  transition: all 0.3s ease !important;
+}
+
+.MuiCheckbox-root:hover {
+  transform: scale(1.1) !important;
+}
+
+/* Enhanced Paper Styles */
+.MuiPaper-root {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Enhanced Snackbar */
+.MuiSnackbar-root {
+  bottom: 24px !important;
+}
+
+.MuiAlert-root {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.loading-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Table Styles */
+.MuiTable-root {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.MuiTableCell-root {
+  border-bottom: 1px solid rgba(224, 224, 224, 0.3) !important;
+}
+
+.MuiTableRow-root:hover {
+  background: rgba(102, 126, 234, 0.05) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Enhanced FormControlLabel */
+.MuiFormControlLabel-root {
+  transition: all 0.3s ease !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin: 4px 0 !important;
+}
+
+.MuiFormControlLabel-root:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+  transform: translateX(4px) !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .App {
+    padding: 10px;
+  }
+  
+  .MuiCard-root {
+    margin: 8px 0 !important;
+  }
+}
+
+/* Dark Theme Enhancements */
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+[data-theme="dark"] .MuiPaper-root {
+  background: rgba(30, 30, 30, 0.9) !important;
+}
+
+[data-theme="dark"] .MuiCard-root {
+  background: rgba(35, 35, 35, 0.9) !important;
+}
