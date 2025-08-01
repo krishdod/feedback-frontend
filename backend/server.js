@@ -9,17 +9,21 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-vercel-domain.vercel.app'],
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : 'http://localhost:3000',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
 app.use(bodyParser.json());
 
-// Add request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+// Add request logging middleware only in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+  });
+}
 
 // Google Sheets setup
 let sheets;
@@ -31,17 +35,14 @@ try {
     ['https://www.googleapis.com/auth/spreadsheets']
   );
   sheets = google.sheets({ version: 'v4', auth });
-  console.log('Google Sheets API initialized successfully');
 } catch (error) {
   console.error('Error setting up Google Sheets:', error);
 }
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '15_ahucMUl8Bx2Dz9lXuJYkfET6nynG47XLlBs8hNLM4';
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
 // Helper function to format date
-const formatDate = () => {
-  return new Date().toLocaleString();
-};
+const formatDate = () => new Date().toLocaleString();
 
 // API endpoint to submit feedback
 app.post('/api/submit-feedback', async (req, res) => {
@@ -143,20 +144,19 @@ app.post('/api/submit-feedback', async (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const status = {
+  res.status(200).json({
     status: 'ok',
     googleSheets: !!sheets,
     spreadsheetId: !!SPREADSHEET_ID
-  };
-  res.status(200).json(status);
+  });
 });
 
 // Start server with error handling
 const server = app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(`Health check available at http://localhost:${port}/api/health`);
-  console.log('Google Sheets Status:', sheets ? 'Connected' : 'Not connected');
-  console.log('Spreadsheet ID:', SPREADSHEET_ID ? 'Configured' : 'Not configured');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Server is running on port ${port}`);
+    console.log(`Health check available at http://localhost:${port}/api/health`);
+  }
 }).on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
     console.error(`Port ${port} is already in use. Please try a different port or kill the process using this port.`);
@@ -165,4 +165,8 @@ const server = app.listen(port, () => {
     console.error('Error starting server:', error);
     process.exit(1);
   }
+});
+
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
 }); 
