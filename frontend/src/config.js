@@ -6,7 +6,7 @@ const config = {
   },
   // Production environment (deployed)
   production: {
-    apiUrl: 'https://your-render-backend-url.onrender.com' // Replace with your actual Render URL
+    apiUrl: 'https://feedback-backend-vkzb.onrender.com'
   }
 };
 
