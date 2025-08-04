@@ -315,19 +315,19 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
                 <FormControlLabel
                   key={colIdx}
                   control={
-                    <Radio
-                      checked={formSection[idx] === String(colIdx + 1)}
-                      onChange={() => handleChange(section, idx, String(colIdx + 1))}
-                      value={colIdx + 1}
-                      name={`${section}-question-${idx}`}
-                      size="small"
-                      sx={{
-                        color: theme.palette.secondary.main,
-                        '&.Mui-checked': {
-                          color: theme.palette.primary.main,
-                        },
-                      }}
-                    />
+                                      <Radio
+                    checked={formSection[idx] === (colIdx + 1)}
+                    onChange={() => handleChange(section, idx, String(colIdx + 1))}
+                    value={colIdx + 1}
+                    name={`${section}-question-${idx}`}
+                    size="small"
+                    sx={{
+                      color: theme.palette.secondary.main,
+                      '&.Mui-checked': {
+                        color: theme.palette.primary.main,
+                      },
+                    }}
+                  />
                   }
                   label={
                     <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
@@ -446,7 +446,7 @@ function LikertMatrix({ questions, section, formSection, handleChange }) {
                   }}
                 >
                   <Radio
-                    checked={formSection[idx] === String(colIdx + 1)}
+                    checked={formSection[idx] === (colIdx + 1)}
                     onChange={() => handleChange(section, idx, String(colIdx + 1))}
                     value={colIdx + 1}
                     name={`${section}-question-${idx}`}
@@ -738,7 +738,24 @@ function Footer() {
 
 function App() {
   const { theme: themeMode, toggleTheme } = useContext(ThemeContext);
-  const [form, setForm] = useState(initialState);
+  
+  // Individual state variables as requested
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [trainingTitle, setTrainingTitle] = useState("");
+  const [instructorName, setInstructorName] = useState("");
+
+  const [contentRatings, setContentRatings] = useState([0, 0, 0, 0]);
+  const [trainerRatings, setTrainerRatings] = useState([0, 0, 0, 0, 0, 0]);
+  const [organizationRatings, setOrganizationRatings] = useState([0, 0, 0]);
+  const [overallRatings, setOverallRatings] = useState([0, 0, 0]);
+
+  const [selectedTopics, setSelectedTopics] = useState([]);
+  const [otherTopicText, setOtherTopicText] = useState("");
+  const [commentText, setCommentText] = useState("");
+
+  // UI state variables
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(Array(steps.length).fill(true));
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -753,22 +770,52 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
-  const handleChange = (section, key, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [key]: value,
-      },
-    }));
+  // Handler for rating changes
+  const handleRatingChange = (section, questionIndex, rating) => {
+    const ratingValue = parseInt(rating);
+    
+    switch (section) {
+      case 'content':
+        setContentRatings(prev => {
+          const newRatings = [...prev];
+          newRatings[questionIndex] = ratingValue;
+          return newRatings;
+        });
+        break;
+      case 'trainer':
+        setTrainerRatings(prev => {
+          const newRatings = [...prev];
+          newRatings[questionIndex] = ratingValue;
+          return newRatings;
+        });
+        break;
+      case 'organization':
+        setOrganizationRatings(prev => {
+          const newRatings = [...prev];
+          newRatings[questionIndex] = ratingValue;
+          return newRatings;
+        });
+        break;
+      case 'overall':
+        setOverallRatings(prev => {
+          const newRatings = [...prev];
+          newRatings[questionIndex] = ratingValue;
+          return newRatings;
+        });
+        break;
+      default:
+        break;
+    }
   };
 
+  // Handler for topic selection
   const handleTopicsChange = (topic) => {
-    setForm((prev) => {
-      const topics = prev.coveredTopics.includes(topic)
-        ? prev.coveredTopics.filter((t) => t !== topic)
-        : [...prev.coveredTopics, topic];
-      return { ...prev, coveredTopics: topics };
+    setSelectedTopics(prev => {
+      if (prev.includes(topic)) {
+        return prev.filter(t => t !== topic);
+      } else {
+        return [...prev, topic];
+      }
     });
   };
 
@@ -786,28 +833,57 @@ function App() {
     if (confirmed) {
       setLoading(true);
       try {
-        console.log('Submitting feedback...', form); // Debug log
+        const payload = {
+          full_name: fullName,
+          email: email,
+          job_role: jobRole,
+          training_title: trainingTitle,
+          instructor_name: instructorName,
+          content_ratings: contentRatings,
+          trainer_ratings: trainerRatings,
+          organization_ratings: organizationRatings,
+          overall_ratings: overallRatings,
+          covered_topics: selectedTopics,
+          other_topic: otherTopicText,
+          comments: commentText
+        };
 
-        const response = await fetch('http://localhost:5000/api/submit-feedback', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(form),
-        });
+        console.log('Submitting feedback...', payload);
 
-        console.log('Response status:', response.status); // Debug log
+                        const response = await fetch("http://127.0.0.1:9000/submit-feedback", {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                  },
+                  body: JSON.stringify(payload),
+                });
+
+        console.log('Response status:', response.status);
 
         const data = await response.json();
-        console.log('Response data:', data); // Debug log
+        console.log('Response data:', data);
 
         if (!response.ok) {
           throw new Error(data.error || 'Failed to submit feedback');
         }
 
         setShowSuccessDialog(true);
-        setForm(initialState);
+        
+        // Reset form
+        setFullName("");
+        setEmail("");
+        setJobRole("");
+        setTrainingTitle("");
+        setInstructorName("");
+        setContentRatings([0, 0, 0, 0]);
+        setTrainerRatings([0, 0, 0, 0, 0, 0]);
+        setOrganizationRatings([0, 0, 0]);
+        setOverallRatings([0, 0, 0]);
+        setSelectedTopics([]);
+        setOtherTopicText("");
+        setCommentText("");
+        
       } catch (error) {
         console.error('Error submitting feedback:', error);
         setError(error.message || 'Failed to submit feedback. Please try again.');
@@ -1093,8 +1169,8 @@ function App() {
                         fullWidth 
                         required 
                         size="small"
-                        value={form.details.name} 
-                        onChange={e => handleChange('details', 'name', e.target.value)}
+                        value={fullName} 
+                        onChange={e => setFullName(e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 1.5,
@@ -1109,8 +1185,8 @@ function App() {
                         fullWidth 
                         required 
                         size="small"
-                        value={form.details.email} 
-                        onChange={e => handleChange('details', 'email', e.target.value)}
+                        value={email} 
+                        onChange={e => setEmail(e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 1.5,
@@ -1124,11 +1200,8 @@ function App() {
                         fullWidth 
                         required 
                         size="small"
-                        value={form.details.role} 
-                        onChange={e => { 
-                          handleChange('details', 'role', e.target.value); 
-                          handleChange('details', 'title', e.target.value); 
-                        }}
+                        value={jobRole} 
+                        onChange={e => setJobRole(e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 1.5,
@@ -1142,8 +1215,8 @@ function App() {
                         fullWidth 
                         required 
                         size="small"
-                        value={form.details.title} 
-                        onChange={e => handleChange('details', 'title', e.target.value)}
+                        value={trainingTitle} 
+                        onChange={e => setTrainingTitle(e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 1.5,
@@ -1157,8 +1230,8 @@ function App() {
                         fullWidth 
                         required 
                         size="small"
-                        value={form.details.instructor} 
-                        onChange={e => handleChange('details', 'instructor', e.target.value)}
+                        value={instructorName} 
+                        onChange={e => setInstructorName(e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 1.5,
@@ -1174,9 +1247,9 @@ function App() {
                 <div id="section-card-1" />
                 <LikertMatrix
                   questions={contentImpactQuestions}
-                  section="contentImpact"
-                  formSection={form.contentImpact}
-                  handleChange={handleChange}
+                  section="content"
+                  formSection={contentRatings}
+                  handleChange={handleRatingChange}
                 />
               </SectionCard>
               {/* Step 2: Trainer */}
@@ -1185,8 +1258,8 @@ function App() {
                 <LikertMatrix
                   questions={trainerQuestions}
                   section="trainer"
-                  formSection={form.trainer}
-                  handleChange={handleChange}
+                  formSection={trainerRatings}
+                  handleChange={handleRatingChange}
                 />
               </SectionCard>
               {/* Step 3: Organization */}
@@ -1195,8 +1268,8 @@ function App() {
                 <LikertMatrix
                   questions={organizationQuestions}
                   section="organization"
-                  formSection={form.organization}
-                  handleChange={handleChange}
+                  formSection={organizationRatings}
+                  handleChange={handleRatingChange}
                 />
               </SectionCard>
               {/* Step 4: Overall Impression */}
@@ -1205,8 +1278,8 @@ function App() {
                 <LikertMatrix
                   questions={overallQuestions}
                   section="overall"
-                  formSection={form.overall}
-                  handleChange={handleChange}
+                  formSection={overallRatings}
+                  handleChange={handleRatingChange}
                 />
               </SectionCard>
               {/* Step 5: Covered Topics */}
@@ -1232,8 +1305,8 @@ function App() {
                         key={topic}
                         label={topic}
                         onClick={() => handleTopicsChange(topic)}
-                        color={form.coveredTopics.includes(topic) ? "primary" : "default"}
-                        variant={form.coveredTopics.includes(topic) ? "filled" : "outlined"}
+                        color={selectedTopics.includes(topic) ? "primary" : "default"}
+                        variant={selectedTopics.includes(topic) ? "filled" : "outlined"}
                         size="small"
                         sx={{
                           cursor: 'pointer',
@@ -1252,8 +1325,8 @@ function App() {
                     label="Other topics (please specify)"
                     fullWidth
                     size="small"
-                    value={form.coveredTopicsOther}
-                    onChange={e => setForm(prev => ({ ...prev, coveredTopicsOther: e.target.value }))}
+                    value={otherTopicText}
+                    onChange={e => setOtherTopicText(e.target.value)}
                     sx={{ 
                       mb: 1.5,
                       '& .MuiOutlinedInput-root': {
@@ -1277,8 +1350,8 @@ function App() {
                     minRows={2}
                     maxRows={4}
                     size="small"
-                    value={form.comments}
-                    onChange={e => setForm(prev => ({ ...prev, comments: e.target.value }))}
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
                     sx={{ 
                       mb: 1.5,
                       '& .MuiOutlinedInput-root': {

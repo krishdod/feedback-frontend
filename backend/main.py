@@ -1,0 +1,86 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from openpyxl import load_workbook
+from uuid import uuid4
+from datetime import datetime
+import os
+
+app = FastAPI()
+print("🚀 FastAPI is initializing...")
+
+
+# Allow all origins for now (customize later)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+EXCEL_FILE = "./backend/Training Feedback.xlsx"  # Your local file
+
+# Define expected data from frontend
+class FeedbackForm(BaseModel):
+    full_name: str
+    email: str
+    job_role: str
+    training_title: str
+    instructor_name: str
+    content_ratings: list[int]
+    trainer_ratings: list[int]
+    organization_ratings: list[int]
+    overall_ratings: list[int]
+    covered_topics: list[str]
+    other_topic: str
+    comments: str
+
+@app.post("/submit-feedback")
+async def submit_feedback(form: FeedbackForm):
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            return {"status": "error", "message": f"{EXCEL_FILE} not found."}
+
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+
+        submission_id = str(uuid4())[:8]
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        def average(lst):
+            return round(sum(lst) / len(lst), 2) if lst else 0
+
+        content_avg = average(form.content_ratings)
+        trainer_avg = average(form.trainer_ratings)
+        org_avg = average(form.organization_ratings)
+        overall_avg = average(form.overall_ratings)
+
+        row = [
+            timestamp,
+            submission_id,
+            form.full_name,
+            form.email,
+            form.job_role,
+            form.training_title,
+            form.instructor_name,
+            content_avg,
+            trainer_avg,
+            org_avg,
+            overall_avg,
+            ", ".join(form.covered_topics),
+            form.other_topic,
+            form.comments,
+        ]
+
+        ws.append(row)
+        wb.save(EXCEL_FILE)
+
+        return {"status": "success", "submission_id": submission_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9000)
+
+print("✅ FastAPI loaded successfully")
