@@ -35,6 +35,41 @@ class FeedbackForm(BaseModel):
     other_topic: str
     comments: str
 
+@app.get("/")
+async def root():
+    return {"message": "Training Feedback API is running!", "endpoints": ["/submit-feedback", "/view-data", "/docs"]}
+
+@app.get("/view-data")
+async def view_data():
+    """View all stored feedback data"""
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            return {"status": "error", "message": f"{EXCEL_FILE} not found."}
+        
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+        
+        data = []
+        headers = []
+        
+        # Get headers (first row)
+        for cell in ws[1]:
+            headers.append(cell.value)
+        
+        # Get all data rows
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if any(cell is not None for cell in row):  # Skip empty rows
+                data.append(row)
+        
+        return {
+            "status": "success",
+            "total_submissions": len(data),
+            "headers": headers,
+            "data": data
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/submit-feedback")
 async def submit_feedback(form: FeedbackForm):
     try:
