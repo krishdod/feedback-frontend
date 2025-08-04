@@ -178,8 +178,8 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
     <Card
       elevation={expanded ? 6 : 2}
       sx={{
-        mb: 2,
-        borderRadius: 2,
+        mb: { xs: 1.5, sm: 2 },
+        borderRadius: { xs: 1.5, sm: 2 },
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         background: theme.palette.mode === 'dark' ? 'rgba(35, 41, 58, 0.8)' : 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(10px)',
@@ -192,7 +192,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
         animation: `${animations.fadeInUp} 0.6s ease-out`,
       }}
     >
-      <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
+      <CardContent sx={{ p: { xs: 1, sm: 2, md: 2.5 } }}>
         <Box
           onClick={onToggle}
           sx={{
@@ -200,22 +200,22 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
             alignItems: 'center',
             justifyContent: 'space-between',
             cursor: 'pointer',
-            p: 0.5,
+            p: { xs: 0.5, sm: 0.5 },
             borderRadius: 1.5,
             transition: 'background 0.2s',
             '&:hover': {
               background: theme.palette.action.hover,
             },
-            mb: expanded ? 1.5 : 0,
+            mb: expanded ? { xs: 1, sm: 1.5 } : 0,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
             <Avatar
               sx={{
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 color: 'white',
-                width: { xs: 32, sm: 40 },
-                height: { xs: 32, sm: 40 },
+                width: { xs: 28, sm: 40 },
+                height: { xs: 28, sm: 40 },
               }}
             >
               {icon}
@@ -225,7 +225,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
               sx={{
                 fontWeight: 600,
                 color: theme.palette.text.primary,
-                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+                fontSize: { xs: '0.9rem', sm: '1.1rem', md: '1.25rem' },
               }}
             >
               {title}
@@ -243,7 +243,7 @@ const SectionCard = React.memo(function SectionCard({ title, expanded, onToggle,
           </IconButton>
         </Box>
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <Box sx={{ pt: 1.5 }}>
+          <Box sx={{ pt: { xs: 1, sm: 1.5 } }}>
             {children}
           </Box>
         </Collapse>
@@ -591,8 +591,8 @@ function Footer() {
     <Box
       component="footer"
       sx={{
-        py: { xs: 4, sm: 6 },
-        px: { xs: 2, sm: 4 },
+        py: { xs: 3, sm: 6 },
+        px: { xs: 1.5, sm: 4 },
         mt: 'auto',
         background: themeMode === 'dark'
           ? 'linear-gradient(180deg, #232526 0%, #414345 100%)'
@@ -601,12 +601,13 @@ function Footer() {
         borderTop: '1px solid',
         borderColor: 'divider',
         boxShadow: 8,
+        width: '100%',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}>
         <Grid
           container
-          spacing={4}
+          spacing={{ xs: 2, sm: 4 }}
           alignItems="flex-start"
           justifyContent="space-between"
         >
@@ -617,8 +618,8 @@ function Footer() {
                 src={themeMode === 'dark' ? logoDark : logoLight}
                 alt="Radiance Tech LLC Logo"
                 style={{
-                  height: 72,
-                  marginBottom: 20,
+                  height: isMobile ? 60 : 72,
+                  marginBottom: isMobile ? 15 : 20,
                   maxWidth: '100%',
                   boxShadow: 'none',
                   filter: themeMode === 'dark' ? 'brightness(0.9) contrast(1.1)' : 'none',
@@ -629,7 +630,13 @@ function Footer() {
                   }
                 }}
               />
-              <Typography variant="body2" sx={{ mb: 2, maxWidth: 240, mx: { xs: 'auto', md: 0 }, color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ 
+                mb: 2, 
+                maxWidth: 240, 
+                mx: { xs: 'auto', md: 0 }, 
+                color: 'text.secondary',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}>
                 Empowering businesses with innovative technology solutions and expert training programs.
               </Typography>
             </Box>
@@ -638,20 +645,37 @@ function Footer() {
           {/* Quick Links */}
           <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: 'primary.main' }}>
+              <Typography variant="h6" sx={{ 
+                mb: 2, 
+                fontWeight: 700, 
+                color: 'primary.main',
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
                 Quick Links
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Link href="https://www.radiancetechllc.com/" color="inherit" underline="hover" sx={{ fontWeight: 500, fontSize: 16 }}>
+                <Link href="https://www.radiancetechllc.com/" color="inherit" underline="hover" sx={{ 
+                  fontWeight: 500, 
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
                   Website
                 </Link>
-                <Link href="https://www.radiancetechllc.com/our-services" color="inherit" underline="hover" sx={{ fontWeight: 500, fontSize: 16 }}>
+                <Link href="https://www.radiancetechllc.com/our-services" color="inherit" underline="hover" sx={{ 
+                  fontWeight: 500, 
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
                   Services
                 </Link>
-                <Link href="https://www.radiancetechllc.com/about-us" color="inherit" underline="hover" sx={{ fontWeight: 500, fontSize: 16 }}>
+                <Link href="https://www.radiancetechllc.com/about-us" color="inherit" underline="hover" sx={{ 
+                  fontWeight: 500, 
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
                   About Us
                 </Link>
-                <Link href="https://www.radiancetechllc.com/get-hired" color="inherit" underline="hover" sx={{ fontWeight: 500, fontSize: 16 }}>
+                <Link href="https://www.radiancetechllc.com/get-hired" color="inherit" underline="hover" sx={{ 
+                  fontWeight: 500, 
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
                   Get Hired
                 </Link>
               </Box>
@@ -661,25 +685,57 @@ function Footer() {
           {/* Contact Info */}
           <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: 'primary.main' }}>
+              <Typography variant="h6" sx={{ 
+                mb: 2, 
+                fontWeight: 700, 
+                color: 'primary.main',
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
                 Contact Us
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                  <EmailIcon color="primary" />
-                  <Link href="mailto:info@radiancetechllc.com" color="inherit" underline="hover" sx={{ fontWeight: 500 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  justifyContent: { xs: 'center', md: 'flex-start' },
+                  flexWrap: 'wrap'
+                }}>
+                  <EmailIcon color="primary" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                  <Link href="mailto:info@radiancetechllc.com" color="inherit" underline="hover" sx={{ 
+                    fontWeight: 500,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}>
                     info@radiancetechllc.com
                   </Link>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                  <PhoneIcon color="primary" />
-                  <Link href="tel:+1234567890" color="inherit" underline="hover" sx={{ fontWeight: 500 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  justifyContent: { xs: 'center', md: 'flex-start' },
+                  flexWrap: 'wrap'
+                }}>
+                  <PhoneIcon color="primary" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                  <Link href="tel:+1234567890" color="inherit" underline="hover" sx={{ 
+                    fontWeight: 500,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}>
                     +1 (234) 567-890
                   </Link>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                  <LocationOnIcon color="primary" />
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  justifyContent: { xs: 'center', md: 'flex-start' },
+                  flexWrap: 'wrap'
+                }}>
+                  <LocationOnIcon color="primary" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                  <Typography variant="body2" sx={{ 
+                    fontWeight: 500,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}>
                     Radiance Tech LLC
                   </Typography>
                 </Box>
@@ -689,26 +745,70 @@ function Footer() {
 
           {/* Social Links */}
           <Grid item xs={12} sm={6} md={3}>
-            <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: 'primary.main' }}>
+            <Box sx={{ 
+              textAlign: { xs: 'center', md: 'left' },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' },
+              justifyContent: { xs: 'center', md: 'flex-start' }
+            }}>
+              <Typography variant="h6" sx={{ 
+                mb: 2, 
+                fontWeight: 700, 
+                color: 'primary.main',
+                fontSize: { xs: '1rem', sm: '1.25rem' },
+                textAlign: { xs: 'center', md: 'left' }
+              }}>
                 Connect
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                <IconButton href="https://www.linkedin.com/company/radiance-tech-llc" target="_blank" sx={{ color: 'primary.main', bgcolor: 'background.paper', boxShadow: 2, '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, transition: 'all 0.3s' }}>
-                  <LinkedInIcon />
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                width: '100%',
+                maxWidth: { xs: '200px', sm: 'none' }
+              }}>
+                <IconButton href="https://www.linkedin.com/company/radiance-tech-llc" target="_blank" sx={{ 
+                  color: 'primary.main', 
+                  bgcolor: 'background.paper', 
+                  boxShadow: 2, 
+                  '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, 
+                  transition: 'all 0.3s',
+                  width: { xs: 36, sm: 40 },
+                  height: { xs: 36, sm: 40 }
+                }}>
+                  <LinkedInIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                 </IconButton>
-                <IconButton href="https://www.facebook.com/radiancetechllc" target="_blank" sx={{ color: 'primary.main', bgcolor: 'background.paper', boxShadow: 2, '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, transition: 'all 0.3s' }}>
-                  <FacebookIcon />
+                <IconButton href="https://www.facebook.com/radiancetechllc" target="_blank" sx={{ 
+                  color: 'primary.main', 
+                  bgcolor: 'background.paper', 
+                  boxShadow: 2, 
+                  '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, 
+                  transition: 'all 0.3s',
+                  width: { xs: 36, sm: 40 },
+                  height: { xs: 36, sm: 40 }
+                }}>
+                  <FacebookIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                 </IconButton>
-                <IconButton href="https://twitter.com/radiancetechllc" target="_blank" sx={{ color: 'primary.main', bgcolor: 'background.paper', boxShadow: 2, '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, transition: 'all 0.3s' }}>
-                  <TwitterIcon />
+                <IconButton href="https://twitter.com/radiancetechllc" target="_blank" sx={{ 
+                  color: 'primary.main', 
+                  bgcolor: 'background.paper', 
+                  boxShadow: 2, 
+                  '&:hover': { bgcolor: 'secondary.main', color: '#fff' }, 
+                  transition: 'all 0.3s',
+                  width: { xs: 36, sm: 40 },
+                  height: { xs: 36, sm: 40 }
+                }}>
+                  <TwitterIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                 </IconButton>
               </Box>
             </Box>
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 4 }} />
+        <Divider sx={{ my: { xs: 2, sm: 4 } }} />
 
         {/* Copyright */}
         <Box sx={{
@@ -719,14 +819,27 @@ function Footer() {
           gap: 2,
           textAlign: { xs: 'center', md: 'left' },
         }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ 
+            fontSize: { xs: '0.7rem', sm: '0.875rem' }
+          }}>
             © {new Date().getFullYear()} Radiance Tech LLC. All rights reserved.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 3, justifyContent: { xs: 'center', md: 'flex-end' } }}>
-            <Link href="/privacy" color="inherit" underline="hover" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: { xs: 2, sm: 3 }, 
+            justifyContent: { xs: 'center', md: 'flex-end' },
+            flexWrap: 'wrap'
+          }}>
+            <Link href="/privacy" color="inherit" underline="hover" variant="body2" sx={{ 
+              whiteSpace: 'nowrap',
+              fontSize: { xs: '0.7rem', sm: '0.875rem' }
+            }}>
               Privacy Policy
             </Link>
-            <Link href="/terms" color="inherit" underline="hover" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+            <Link href="/terms" color="inherit" underline="hover" variant="body2" sx={{ 
+              whiteSpace: 'nowrap',
+              fontSize: { xs: '0.7rem', sm: '0.875rem' }
+            }}>
               Terms of Service
             </Link>
           </Box>
@@ -1048,7 +1161,7 @@ function App() {
           background: themeMode === 'dark' 
             ? 'linear-gradient(135deg, #232526 0%, #414345 100%)' 
             : 'linear-gradient(135deg, #f3e7e9 0%, #e3eeff 100%)', 
-          py: isMobile ? 1 : 3,
+          py: isMobile ? 0.5 : 3,
           scrollBehavior: 'smooth',
           animation: `${animations.fadeInUp} 0.8s ease-out`,
         }}
@@ -1057,16 +1170,16 @@ function App() {
           maxWidth="lg" 
           sx={{ 
             flex: 1, 
-            mb: { xs: 1, sm: 2, md: 3 },
-            px: { xs: 1, sm: 2 },
-            py: { xs: 0.5, sm: 1 }
+            mb: { xs: 0.5, sm: 2, md: 3 },
+            px: { xs: 0.5, sm: 2 },
+            py: { xs: 0.25, sm: 1 }
           }}
         >
           <Paper 
             elevation={4} 
             sx={{ 
-              p: { xs: 1.5, sm: 2, md: 3 }, 
-              borderRadius: { xs: 1.5, sm: 2, md: 3 }, 
+              p: { xs: 1, sm: 2, md: 3 }, 
+              borderRadius: { xs: 1, sm: 2, md: 3 }, 
               background: themeMode === 'dark' ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
               backdropFilter: 'blur(10px)',
               transition: 'all 0.3s ease',
@@ -1084,7 +1197,7 @@ function App() {
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center', 
-              mb: { xs: 2, sm: 3 },
+              mb: { xs: 1.5, sm: 3 },
               flexDirection: isMobile ? 'column' : 'row',
               gap: 1,
             }}>
@@ -1095,8 +1208,8 @@ function App() {
                 p: 0,
                 display: 'flex',
                 alignItems: 'center',
-                height: { xs: 40, sm: 60, md: 80 },
-                maxWidth: { xs: 200, sm: 280 },
+                height: { xs: 36, sm: 60, md: 80 },
+                maxWidth: { xs: 180, sm: 280 },
                 width: '100%',
                 justifyContent: 'center',
                 animation: `${animations.fadeInUp} 0.6s ease-out`,
@@ -1105,8 +1218,8 @@ function App() {
                   src={themeMode === 'dark' ? logoDark : logoLight}
                   alt="Radiance Tech LLC Logo"
                   style={{
-                    height: isMobile ? 36 : 60,
-                    marginBottom: isMobile ? 5 : 10,
+                    height: isMobile ? 32 : 60,
+                    marginBottom: isMobile ? 3 : 10,
                     maxWidth: '100%',
                     boxShadow: 'none',
                     filter: themeMode === 'dark' ? 'brightness(0.9) contrast(1.1)' : 'none',
@@ -1128,7 +1241,7 @@ function App() {
                   />
                 }
                 label={
-                  <Typography variant="body2" sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '0.65rem', sm: '0.8rem' } }}>
                     {themeMode === 'dark' ? '🌙 Dark' : '☀️ Light'}
                   </Typography>
                 }
@@ -1136,7 +1249,7 @@ function App() {
                   ml: 1, 
                   userSelect: 'none',
                   '& .MuiFormControlLabel-label': {
-                    fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                    fontSize: { xs: '0.65rem', sm: '0.8rem' }
                   }
                 }}
               />
@@ -1148,8 +1261,8 @@ function App() {
               sx={{ 
                 fontWeight: 700, 
                 color: 'primary.main', 
-                mb: { xs: 2, sm: 3 },
-                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+                mb: { xs: 1.5, sm: 3 },
+                fontSize: { xs: '1.1rem', sm: '1.5rem', md: '1.75rem' }
               }}
             >
               Training Evaluation Form
@@ -1158,11 +1271,24 @@ function App() {
               {/* Step 0: Course Details */}
               <SectionCard title="Details" expanded={expanded[0]} onToggle={() => handleExpandToggle(0)} icon={<PersonIcon />}>
                 <div id="section-card-0" />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: 2,
+                  alignItems: { xs: 'center', sm: 'flex-start' },
+                  width: '100%'
+                }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ 
+                    mb: 0.5,
+                    textAlign: { xs: 'center', sm: 'left' },
+                    width: '100%'
+                  }}>
                     Please provide your information and training details:
                   </Typography>
-                  <Grid container spacing={{ xs: 1, sm: 2 }}>
+                  <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ 
+                    width: '100%',
+                    justifyContent: { xs: 'center', sm: 'flex-start' }
+                  }}>
                     <Grid item xs={12} sm={6} md={4}>
                       <TextField 
                         label="Full Name" 
