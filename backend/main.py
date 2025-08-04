@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-EXCEL_FILE = "./backend/Training Feedback.xlsx"  # Your local file
+EXCEL_FILE = "Training Feedback.xlsx"  # Excel file in the same directory
 
 # Define expected data from frontend
 class FeedbackForm(BaseModel):

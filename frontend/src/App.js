@@ -22,6 +22,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { ThemeContext } from './ThemeContext';
+import { getApiUrl } from './config';
 
 const coveredTopicsList = [
   'Introduction',
@@ -963,7 +964,7 @@ function App() {
 
         console.log('Submitting feedback...', payload);
 
-                        const response = await fetch("http://127.0.0.1:9000/submit-feedback", {
+                        const response = await fetch(getApiUrl("/submit-feedback"), {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
