@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from openpyxl import load_workbook
 from uuid import uuid4
@@ -37,7 +38,16 @@ class FeedbackForm(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Training Feedback API is running!", "endpoints": ["/submit-feedback", "/view-data", "/docs"]}
+    return {"message": "Training Feedback API is running!", "endpoints": ["/submit-feedback", "/view-data", "/download-excel", "/docs"]}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring and wake-up detection"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "Training Feedback API"
+    }
 
 @app.get("/view-data")
 async def view_data():
@@ -67,6 +77,21 @@ async def view_data():
             "headers": headers,
             "data": data
         }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/download-excel")
+async def download_excel():
+    """Download the Excel file with all stored data"""
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            return {"status": "error", "message": f"{EXCEL_FILE} not found."}
+        
+        return FileResponse(
+            path=EXCEL_FILE,
+            filename="Training_Feedback_Data.xlsx",
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
