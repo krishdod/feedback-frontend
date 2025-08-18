@@ -95,7 +95,36 @@ async def download_excel():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.delete("/delete-feedback/{submission_id}")
+async def delete_feedback(submission_id: str):
+    """Delete a specific feedback entry by submission ID"""
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            return {"status": "error", "message": f"{EXCEL_FILE} not found."}
+
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+        
+        # Find the row with the matching submission ID
+        row_to_delete = None
+        for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            if row[1] == submission_id:  # submission_id is in column B (index 1)
+                row_to_delete = row_num
+                break
+        
+        if row_to_delete is None:
+            return {"status": "error", "message": f"Submission with ID {submission_id} not found."}
+        
+        # Delete the row
+        ws.delete_rows(row_to_delete)
+        wb.save(EXCEL_FILE)
+        
+        return {"status": "success", "message": f"Submission {submission_id} deleted successfully."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/submit-feedback")
+
 async def submit_feedback(form: FeedbackForm):
     try:
         if not os.path.exists(EXCEL_FILE):
