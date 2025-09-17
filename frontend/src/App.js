@@ -73,13 +73,13 @@ const overallQuestions = [
 ];
 
 const steps = [
-  'Course Details',
-  'Content & Impact',
-  'Trainer',
-  'Organization',
-  'Overall Impression',
-  'Covered Topics',
-  'Comments & Suggestions',
+  'Participant Information',
+  'Training Content Quality',
+  'Instructor Performance',
+  'Training Organization',
+  'Overall Training Experience',
+  'Topics Covered',
+  'Additional Feedback',
 ];
 
 // Enhanced animations
@@ -636,7 +636,10 @@ function AdminPage() {
       <Container maxWidth="sm" sx={{ py: 6 }}>
         <Paper elevation={6} sx={{ p: 3, borderRadius: 3 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, textAlign: 'center' }}>
-            Admin Access
+            🔐 Administrator Access
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
+            Enter the admin password to view training feedback submissions
           </Typography>
           <TextField
             type="password"
@@ -663,7 +666,7 @@ function AdminPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>Submitted Feedback</Typography>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>📊 Training Feedback Submissions</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button variant="outlined" onClick={() => window.location.href = getApiUrl('/download-excel')}>Download Excel</Button>
           <Button variant="text" onClick={() => { sessionStorage.removeItem('admin_authed'); window.location.reload(); }}>Sign out</Button>
@@ -977,7 +980,7 @@ function Footer() {
         {/* Admin Submissions Button */}
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button variant="outlined" size="small" onClick={() => (window.location.href = '/admin')}>
-            View Submissions (Admin)
+            🔐 Admin Dashboard - View Submissions
           </Button>
         </Box>
       </Container>
@@ -1426,11 +1429,26 @@ function App() {
                 fontSize: { xs: '1.1rem', sm: '1.5rem', md: '1.75rem' }
               }}
             >
-              Training Evaluation Form
+              📋 Training Feedback & Evaluation System
+            </Typography>
+            <Typography 
+              variant="body1" 
+              align="center" 
+              sx={{ 
+                color: 'text.secondary', 
+                mb: { xs: 2, sm: 3 },
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                maxWidth: '600px',
+                mx: 'auto',
+                lineHeight: 1.6
+              }}
+            >
+              Help us improve our training programs by sharing your valuable feedback. 
+              Your responses will help us enhance future training sessions and ensure the best learning experience for all participants.
             </Typography>
             <Box component="form" onSubmit={handleSubmit}>
-              {/* Step 0: Course Details */}
-              <SectionCard title="Details" expanded={expanded[0]} onToggle={() => handleExpandToggle(0)} icon={<PersonIcon />}>
+              {/* Step 0: Participant Information */}
+              <SectionCard title="👤 Participant Information" expanded={expanded[0]} onToggle={() => handleExpandToggle(0)} icon={<PersonIcon />}>
                 <div id="section-card-0" />
                 <Box sx={{ 
                   display: 'flex', 
@@ -1529,8 +1547,8 @@ function App() {
                   </Grid>
                 </Box>
               </SectionCard>
-              {/* Step 1: Content & Impact */}
-              <SectionCard title="Content & Impact" expanded={expanded[1]} onToggle={() => handleExpandToggle(1)} icon={<SchoolIcon />}>
+              {/* Step 1: Training Content Quality */}
+              <SectionCard title="📚 Training Content Quality" expanded={expanded[1]} onToggle={() => handleExpandToggle(1)} icon={<SchoolIcon />}>
                 <div id="section-card-1" />
                 <LikertMatrix
                   questions={contentImpactQuestions}
@@ -1539,8 +1557,8 @@ function App() {
                   handleChange={handleRatingChange}
                 />
               </SectionCard>
-              {/* Step 2: Trainer */}
-              <SectionCard title="Trainer" expanded={expanded[2]} onToggle={() => handleExpandToggle(2)} icon={<GroupIcon />}>
+              {/* Step 2: Instructor Performance */}
+              <SectionCard title="👨‍🏫 Instructor Performance" expanded={expanded[2]} onToggle={() => handleExpandToggle(2)} icon={<GroupIcon />}>
                 <div id="section-card-2" />
                 <LikertMatrix
                   questions={trainerQuestions}
@@ -1549,8 +1567,8 @@ function App() {
                   handleChange={handleRatingChange}
                 />
               </SectionCard>
-              {/* Step 3: Organization */}
-              <SectionCard title="Organization" expanded={expanded[3]} onToggle={() => handleExpandToggle(3)} icon={<StarIcon />}>
+              {/* Step 3: Training Organization */}
+              <SectionCard title="🏢 Training Organization" expanded={expanded[3]} onToggle={() => handleExpandToggle(3)} icon={<StarIcon />}>
                 <div id="section-card-3" />
                 <LikertMatrix
                   questions={organizationQuestions}
@@ -1559,8 +1577,8 @@ function App() {
                   handleChange={handleRatingChange}
                 />
               </SectionCard>
-              {/* Step 4: Overall Impression */}
-              <SectionCard title="Overall Impression" expanded={expanded[4]} onToggle={() => handleExpandToggle(4)} icon={<StarIcon />}>
+              {/* Step 4: Overall Training Experience */}
+              <SectionCard title="⭐ Overall Training Experience" expanded={expanded[4]} onToggle={() => handleExpandToggle(4)} icon={<StarIcon />}>
                 <div id="section-card-4" />
                 <LikertMatrix
                   questions={overallQuestions}
@@ -1569,8 +1587,8 @@ function App() {
                   handleChange={handleRatingChange}
                 />
               </SectionCard>
-              {/* Step 5: Covered Topics */}
-              <SectionCard title="Covered Topics" expanded={expanded[5]} onToggle={() => handleExpandToggle(5)}>
+              {/* Step 5: Topics Covered */}
+              <SectionCard title="📋 Topics Covered" expanded={expanded[5]} onToggle={() => handleExpandToggle(5)}>
                 <div id="section-card-5" />
                 <Box sx={{ 
                   display: 'flex', 
@@ -1623,8 +1641,8 @@ function App() {
                   />
                 </Box>
               </SectionCard>
-              {/* Step 6: Comments & Suggestions */}
-              <SectionCard title="Comments & Suggestions" expanded={expanded[6]} onToggle={() => handleExpandToggle(6)}>
+              {/* Step 6: Additional Feedback */}
+              <SectionCard title="💬 Additional Feedback" expanded={expanded[6]} onToggle={() => handleExpandToggle(6)}>
                 <div id="section-card-6" />
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   <Typography variant="body2" color="text.secondary">
@@ -1685,7 +1703,7 @@ function App() {
                     }
                   }}
                 >
-                  {loading ? "Submitting..." : "Submit Feedback"}
+                  {loading ? "Submitting..." : "🚀 Submit My Feedback"}
                 </Button>
                 {loading && (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.8rem' }}>
