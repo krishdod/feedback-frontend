@@ -1048,7 +1048,25 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:9000';
+        // Dynamic API URL - works for both local and production
+        const API_BASE_URL = (() => {
+            const hostname = window.location.hostname;
+            const protocol = window.location.protocol;
+            
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:9000';
+            } else if (hostname.includes('render.com')) {
+                // If frontend is on Render, backend should be on same domain with different port
+                return `${protocol}//${hostname.replace('feedback-frontend', 'feedback-backend')}`;
+            } else {
+                // Fallback for other deployments - you can customize this
+                return 'https://feedback-backend-8q8h.onrender.com';
+            }
+        })();
+        
+        // Debug: Log the API URL being used
+        console.log('🌐 Using API URL:', API_BASE_URL);
+        
         const ADMIN_PASSWORD = 'radiance123'; // Change this to your desired password
         let allData = [];
         let filteredData = [];
@@ -1236,11 +1254,13 @@
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
+                console.error('API URL being used:', API_BASE_URL);
                 document.getElementById('tableContent').innerHTML = `
                     <div class="error">
                         <h3>❌ Error Loading Data</h3>
-                        <p>${error.message}</p>
-                        <p>Please check if the backend server is running.</p>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>API URL:</strong> ${API_BASE_URL}</p>
+                        <p>Please check if the backend server is running and accessible.</p>
                         <button class="btn btn-primary" onclick="loadData()">Try Again</button>
                     </div>
                 `;
