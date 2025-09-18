@@ -12,6 +12,8 @@ import StarIcon from '@mui/icons-material/Star';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import GetAppIcon from '@mui/icons-material/GetApp';
 import logoLight from './assets/radiance_logo_light.png';
 import logoDark from './assets/radiance_logo_dark.png';
 import { keyframes } from '@mui/system';
@@ -23,6 +25,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { ThemeContext } from './ThemeContext';
 import { getApiUrl } from './config';
+import AdminRedirect from './AdminRedirect';
 
 const coveredTopicsList = [
   'Introduction',
@@ -583,7 +586,1061 @@ function SuccessDialog({ open, onClose }) {
   );
 }
 
-// AdminPage component removed - using HTML dashboard with password protection
+// AdminPage component removed - now using HTML dashboard
+  const theme = useTheme();
+  const [isAuthed, setIsAuthed] = useState(() => sessionStorage.getItem('admin_authed') === '1');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [headers, setHeaders] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [filter, setFilter] = useState('');
+  const [orderBy, setOrderBy] = useState('submitted');
+  const [order, setOrder] = useState('desc');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  const handleAuthenticate = () => {
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_authed', '1');
+      setIsAuthed(true);
+      setAuthError('');
+    } else {
+      setAuthError('Incorrect password');
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthed) return;
+    let ignore = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const resp = await fetch(getApiUrl('/view-data'));
+        const data = await resp.json();
+        if (!resp.ok || data.status !== 'success') {
+          throw new Error(data.message || 'Failed to load submissions');
+        }
+        if (!ignore) {
+          setHeaders(data.headers || []);
+          setRows(data.data || []);
+        }
+      } catch (e) {
+        if (!ignore) setError(e.message || 'Failed to load submissions');
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => { ignore = true; };
+  }, [isAuthed]);
+
+  if (!isAuthed) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Paper elevation={6} sx={{ p: 3, borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, textAlign: 'center' }}>
+            🔐 Administrator Access
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
+            Enter the admin password to view training feedback submissions
+          </Typography>
+          <TextField
+            type="password"
+            label="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAuthenticate(); }}
+          />
+          {authError && (
+            <Alert severity="error" sx={{ mb: 2 }}>{authError}</Alert>
+          )}
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+            <Button variant="contained" onClick={handleAuthenticate}>Enter</Button>
+            <Button variant="outlined" onClick={() => (window.location.href = '/')}>Back</Button>
+          </Box>
+        </Paper>
+      </Container>
+    );
+  }
+
+  const handleViewDetails = (submission) => {
+    setSelectedSubmission(submission);
+    setDetailDialogOpen(true);
+  };
+
+  // Enhanced helpers for detailed rating breakdown
+  const parseRow = (row) => {
+    const r = row || [];
+    const submittedAt = r[0] || '';
+    const submissionId = r[1] || '';
+    const name = r[2] || '';
+    const email = r[3] || '';
+    const role = r[4] || '';
+    const title = r[5] || '';
+    const instructor = r[6] || '';
+    
+    // Parse detailed ratings
+    const contentRatings = r.slice(7, 11).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+    const trainerRatings = r.slice(11, 17).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+    const orgRatings = r.slice(17, 20).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+    const overallRatings = r.slice(20, 23).map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+    
+    const contentAvg = contentRatings.length ? (contentRatings.reduce((a, b) => a + b, 0) / contentRatings.length).toFixed(1) : null;
+    const trainerAvg = trainerRatings.length ? (trainerRatings.reduce((a, b) => a + b, 0) / trainerRatings.length).toFixed(1) : null;
+    const orgAvg = orgRatings.length ? (orgRatings.reduce((a, b) => a + b, 0) / orgRatings.length).toFixed(1) : null;
+    const overallAvg = overallRatings.length ? (overallRatings.reduce((a, b) => a + b, 0) / overallRatings.length).toFixed(1) : null;
+    
+    const topicStartIdx = 23;
+    const trailing = r.slice(topicStartIdx);
+    const topics = trailing.filter((cell) => typeof cell === 'string' && coveredTopicsList.includes(cell.trim()));
+    const comment = trailing.reverse().find((cell) => typeof cell === 'string' && cell.length > 0 && !coveredTopicsList.includes(cell.trim())) || '';
+    
+    return { 
+      submittedAt, 
+      submissionId,
+      name, 
+      email, 
+      role, 
+      title, 
+      instructor, 
+      contentAvg, 
+      trainerAvg, 
+      orgAvg, 
+      overallAvg,
+      topics, 
+      comment, 
+      raw: r 
+    };
+  };
+
+  const parsed = rows.map(parseRow).filter((p) => (p.name + ' ' + p.email + ' ' + p.title).toLowerCase().includes(filter.toLowerCase()));
+
+  const stableSort = (arr, cmp) => arr.map((el, index) => [el, index]).sort((a, b) => {
+    const order = cmp(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  }).map((el) => el[0]);
+
+  const comparator = (a, b) => {
+    const dir = order === 'asc' ? 1 : -1;
+    if (orderBy === 'submitted') return dir * String(a.submittedAt).localeCompare(String(b.submittedAt));
+    if (orderBy === 'name') return dir * String(a.name).localeCompare(String(b.name));
+    if (orderBy === 'content') return dir * ((a.contentAvg ?? -Infinity) - (b.contentAvg ?? -Infinity));
+    if (orderBy === 'trainer') return dir * ((a.trainerAvg ?? -Infinity) - (b.trainerAvg ?? -Infinity));
+    if (orderBy === 'org') return dir * ((a.orgAvg ?? -Infinity) - (b.orgAvg ?? -Infinity));
+    if (orderBy === 'overall') return dir * ((a.overallAvg ?? -Infinity) - (b.overallAvg ?? -Infinity));
+    return 0;
+  };
+
+  const sorted = stableSort(parsed, comparator);
+  const paged = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  // Calculate detailed statistics
+  const stats = (() => {
+    const contentAvgs = parsed.map(p => p.contentAvg).filter(v => v != null).map(Number);
+    const trainerAvgs = parsed.map(p => p.trainerAvg).filter(v => v != null).map(Number);
+    const orgAvgs = parsed.map(p => p.orgAvg).filter(v => v != null).map(Number);
+    const overallAvgs = parsed.map(p => p.overallAvg).filter(v => v != null).map(Number);
+    
+    return {
+      totalSubmissions: parsed.length,
+      contentAvg: contentAvgs.length ? (contentAvgs.reduce((a,b)=>a+b,0)/contentAvgs.length).toFixed(1) : '-',
+      trainerAvg: trainerAvgs.length ? (trainerAvgs.reduce((a,b)=>a+b,0)/trainerAvgs.length).toFixed(1) : '-',
+      orgAvg: orgAvgs.length ? (orgAvgs.reduce((a,b)=>a+b,0)/orgAvgs.length).toFixed(1) : '-',
+      overallAvg: overallAvgs.length ? (overallAvgs.reduce((a,b)=>a+b,0)/overallAvgs.length).toFixed(1) : '-'
+    };
+  })();
+
+  return (
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%)',
+      py: 1,
+      px: 1
+    }}>
+      <Container maxWidth="xl" sx={{ 
+        background: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: 3,
+        boxShadow: '0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+        overflow: 'hidden',
+        minHeight: '95vh'
+      }}>
+        {/* Professional Header */}
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+          color: 'white',
+          p: 4,
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <Box sx={{ 
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+            animation: 'rotate 20s linear infinite'
+          }} />
+          <Typography variant="h3" sx={{ 
+            fontWeight: 800, 
+            mb: 1,
+            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            position: 'relative',
+            zIndex: 1,
+            background: 'linear-gradient(45deg, #ffffff 0%, #e0f2fe 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            📊 Training Feedback Dashboard
+          </Typography>
+          <Typography variant="h6" sx={{ 
+            opacity: 0.9,
+            position: 'relative',
+            zIndex: 1,
+            fontWeight: 400,
+            color: '#e0f2fe'
+          }}>
+            Monitor and analyze training feedback submissions
+          </Typography>
+        </Box>
+
+        {/* Professional Statistics Cards */}
+        <Grid container spacing={3} sx={{ 
+          p: 3,
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          position: 'relative'
+        }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper elevation={4} sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              border: '1px solid rgba(59, 130, 246, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 25px 50px rgba(59, 130, 246, 0.2)',
+                border: '1px solid rgba(59, 130, 246, 0.3)'
+              }
+            }}>
+              <Box sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+              }}>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+                  📊
+                </Typography>
+              </Box>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 800, 
+                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}>
+                {stats.totalSubmissions}
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: '#64748b',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: 1
+              }}>
+                Total Submissions
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper elevation={4} sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              border: '1px solid rgba(16, 185, 129, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 25px 50px rgba(16, 185, 129, 0.2)',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
+              }
+            }}>
+              <Box sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)'
+              }}>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+                  📚
+                </Typography>
+              </Box>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 800, 
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}>
+                {stats.contentAvg}
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: '#64748b',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: 1
+              }}>
+                Avg Content Rating
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper elevation={4} sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 25px 50px rgba(245, 158, 11, 0.2)',
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }
+            }}>
+              <Box sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 20px rgba(245, 158, 11, 0.3)'
+              }}>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+                  👨‍🏫
+                </Typography>
+              </Box>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 800, 
+                background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}>
+                {stats.trainerAvg}
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: '#64748b',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: 1
+              }}>
+                Avg Trainer Rating
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper elevation={4} sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              border: '1px solid rgba(139, 92, 246, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 25px 50px rgba(139, 92, 246, 0.2)',
+                border: '1px solid rgba(139, 92, 246, 0.3)'
+              }
+            }}>
+              <Box sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)'
+              }}>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+                  ⭐
+                </Typography>
+              </Box>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 800, 
+                background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}>
+                {stats.overallAvg}
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: '#64748b',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: 1
+              }}>
+                Avg Overall Rating
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Professional Search and Actions */}
+        <Box sx={{ 
+          p: 3,
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 3,
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <TextField
+            size="medium"
+            placeholder="Search by name, email, training title, or instructor..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">🔍</InputAdornment>,
+            }}
+            sx={{ 
+              flex: 1,
+              minWidth: 400,
+              maxWidth: 600,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                fontSize: '1rem',
+                '&:hover': {
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+                },
+                '&.Mui-focused': {
+                  border: '1px solid rgba(59, 130, 246, 0.6)',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                }
+              }
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button 
+              variant="contained" 
+              startIcon={<RefreshIcon />}
+              onClick={() => window.location.reload()}
+              sx={{ 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 600,
+                boxShadow: '0 8px 25px rgba(59, 130, 246, 0.3)',
+                '&:hover': {
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: '0 12px 30px rgba(59, 130, 246, 0.4)'
+                }
+              }}
+            >
+              Refresh Data
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<GetAppIcon />}
+              onClick={() => window.location.href = getApiUrl('/download-excel')}
+              sx={{ 
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 600,
+                boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+                '&:hover': {
+                  transform: 'translateY(-2px) scale(1.02)',
+                  boxShadow: '0 12px 30px rgba(16, 185, 129, 0.4)'
+                }
+              }}
+            >
+              Download Excel
+            </Button>
+            <Button 
+              variant="outlined" 
+              onClick={() => { sessionStorage.removeItem('admin_authed'); window.location.reload(); }}
+              sx={{ 
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 600,
+                border: '2px solid rgba(239, 68, 68, 0.3)',
+                color: '#ef4444',
+                '&:hover': {
+                  border: '2px solid rgba(239, 68, 68, 0.6)',
+                  background: 'rgba(239, 68, 68, 0.05)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Sign Out
+            </Button>
+          </Box>
+        </Box>
+
+        {loading && (
+          <Box sx={{ textAlign: 'center', p: 5 }}>
+            <Typography variant="h6" sx={{ color: '#283d22', mb: 2 }}>
+              Loading feedback data...
+            </Typography>
+            <Box sx={{ 
+              display: 'inline-block',
+              width: 40,
+              height: 40,
+              border: '4px solid rgba(40, 61, 34, 0.2)',
+              borderTop: '4px solid #283d22',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          </Box>
+        )}
+        
+        {error && (
+          <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
+            <Typography variant="h6">❌ Error Loading Data</Typography>
+            <Typography>{error}</Typography>
+            <Typography>Please check if the backend server is running.</Typography>
+            <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 1 }}>
+              Try Again
+            </Button>
+          </Alert>
+        )}
+        
+        {!loading && !error && (
+          <Box sx={{ 
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+            borderRadius: 4,
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(226, 232, 240, 0.8)'
+          }}>
+            <TableContainer sx={{ 
+              maxHeight: '70vh',
+              overflow: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px'
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f5f9',
+                borderRadius: '4px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)'
+                }
+              }
+            }}>
+              <Table size="medium" stickyHeader>
+                <TableHead>
+                  <TableRow sx={{ 
+                    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                    '& .MuiTableCell-head': {
+                      borderBottom: 'none'
+                    }
+                  }}>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 160,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      📅 Date & Time
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      🆔 ID
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 180,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      👤 Name
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 250,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      📧 Email
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 150,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      💼 Job Role
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 200,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      📚 Training Title
+                    </TableCell>
+                    <TableCell sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 180,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      👨‍🏫 Instructor
+                    </TableCell>
+                    <TableCell align="center" sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      📊 Content
+                    </TableCell>
+                    <TableCell align="center" sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      👨‍🏫 Trainer
+                    </TableCell>
+                    <TableCell align="center" sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      🏢 Org
+                    </TableCell>
+                    <TableCell align="center" sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2,
+                      borderRight: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      ⭐ Overall
+                    </TableCell>
+                    <TableCell align="center" sx={{ 
+                      color: 'white', 
+                      fontWeight: 700, 
+                      minWidth: 120,
+                      fontSize: '0.9rem',
+                      py: 2
+                    }}>
+                      📋 Details
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paged.map((p, rIdx) => (
+                    <TableRow key={rIdx} hover sx={{ 
+                      '&:nth-of-type(odd)': { backgroundColor: 'rgba(59, 130, 246, 0.02)' },
+                      '&:hover': { 
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        transform: 'scale(1.001)',
+                        transition: 'all 0.2s ease'
+                      },
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <TableCell sx={{ 
+                        fontSize: '0.8rem', 
+                        color: '#64748b',
+                        fontWeight: 500,
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }}>
+                        {p.submittedAt}
+                      </TableCell>
+                      <TableCell sx={{ py: 2, borderRight: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        <Chip 
+                          label={p.submissionId} 
+                          size="small" 
+                          variant="outlined"
+                          sx={{ 
+                            fontFamily: 'monospace',
+                            fontSize: '0.75rem',
+                            background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            fontWeight: 600
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ 
+                        fontWeight: 600, 
+                        color: '#1e293b',
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }} title={p.name}>
+                        {p.name}
+                      </TableCell>
+                      <TableCell sx={{ 
+                        color: '#475569',
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }} title={p.email}>
+                        {p.email}
+                      </TableCell>
+                      <TableCell sx={{ 
+                        color: '#64748b',
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }} title={p.role}>
+                        {p.role}
+                      </TableCell>
+                      <TableCell sx={{ 
+                        fontWeight: 500,
+                        color: '#1e293b',
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }} title={p.title}>
+                        {p.title}
+                      </TableCell>
+                      <TableCell sx={{ 
+                        color: '#475569',
+                        py: 2,
+                        borderRight: '1px solid rgba(226, 232, 240, 0.5)'
+                      }} title={p.instructor}>
+                        {p.instructor}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 2, borderRight: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        {p.contentAvg && (
+                          <Chip 
+                            label={p.contentAvg} 
+                            size="small" 
+                            sx={{ 
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }} 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 2, borderRight: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        {p.trainerAvg && (
+                          <Chip 
+                            label={p.trainerAvg} 
+                            size="small" 
+                            sx={{ 
+                              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 6px 16px rgba(245, 158, 11, 0.4)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }} 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 2, borderRight: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        {p.orgAvg && (
+                          <Chip 
+                            label={p.orgAvg} 
+                            size="small" 
+                            sx={{ 
+                              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 6px 16px rgba(139, 92, 246, 0.4)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }} 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 2, borderRight: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        {p.overallAvg && (
+                          <Chip 
+                            label={p.overallAvg} 
+                            size="small" 
+                            sx={{ 
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }} 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 2 }}>
+                        <Button 
+                          variant="contained" 
+                          size="small"
+                          onClick={() => handleViewDetails(p)}
+                          sx={{ 
+                            borderRadius: 2,
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 0.5,
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {rows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={12} align="center" sx={{ 
+                        color: '#64748b',
+                        fontStyle: 'italic',
+                        p: 6,
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)',
+                        border: '2px dashed rgba(59, 130, 246, 0.3)',
+                        borderRadius: 3,
+                        fontSize: '1.1rem',
+                        fontWeight: 500
+                      }}>
+                        📭 No feedback submissions yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
+        
+        {!loading && !error && rows.length > 0 && (
+          <Box sx={{ 
+            background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+            borderTop: '1px solid rgba(226, 232, 240, 0.8)',
+            borderRadius: '0 0 16px 16px'
+          }}>
+            <TablePagination
+              component="div"
+              count={sorted.length}
+              page={page}
+              onPageChange={(event, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) => {
+                setRowsPerPage(parseInt(event.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25, 50, 100]}
+              sx={{ 
+                background: 'transparent',
+                '& .MuiTablePagination-toolbar': {
+                  padding: '16px 24px',
+                  fontSize: '0.9rem',
+                  fontWeight: 500
+                },
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: '#475569'
+                },
+                '& .MuiTablePagination-select': {
+                  fontSize: '0.9rem',
+                  fontWeight: 600
+                },
+                '& .MuiIconButton-root': {
+                  color: '#3b82f6',
+                  '&:hover': {
+                    background: 'rgba(59, 130, 246, 0.1)'
+                  }
+                }
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Detail Dialog */}
+        <Dialog 
+          open={detailDialogOpen} 
+          onClose={() => setDetailDialogOpen(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              📋 Submission Details
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            {selectedSubmission && (
+              <Box sx={{ mt: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Participant</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedSubmission.name}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+                    <Typography variant="body1">{selectedSubmission.email}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Job Role</Typography>
+                    <Typography variant="body1">{selectedSubmission.role}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Training Title</Typography>
+                    <Typography variant="body1">{selectedSubmission.title}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Instructor</Typography>
+                    <Typography variant="body1">{selectedSubmission.instructor}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">Submitted At</Typography>
+                    <Typography variant="body1">{selectedSubmission.submittedAt}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Topics Covered</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                      {selectedSubmission.topics.map((topic, idx) => (
+                        <Chip 
+                          key={idx} 
+                          label={topic} 
+                          size="small" 
+                          sx={{
+                            background: 'linear-gradient(135deg, #283d22 0%, #4a7c59 100%)',
+                            color: 'white',
+                            fontSize: '0.65rem',
+                            fontWeight: 500,
+                            boxShadow: '0 1px 3px rgba(40, 61, 34, 0.2)',
+                            '&:hover': {
+                              transform: 'scale(1.05)',
+                              boxShadow: '0 2px 5px rgba(40, 61, 34, 0.3)'
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Comments</Typography>
+                    <Typography variant="body1" sx={{ 
+                      mt: 1, 
+                      p: 2, 
+                      background: '#f5f5f5', 
+                      borderRadius: 1,
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      {selectedSubmission.comment || 'No comments provided'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
+  );
+}
 
 function Footer() {
   const { theme: themeMode } = useContext(ThemeContext);
@@ -848,10 +1905,13 @@ function Footer() {
           </Box>
         </Box>
 
-        {/* Admin Dashboard Button - Direct Access */}
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-          <Button variant="outlined" size="small" onClick={() => (window.location.href = '/admin-dashboard.html')}>
+        {/* Admin Submissions Button */}
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Button variant="outlined" size="small" onClick={() => (window.location.href = '/admin')}>
             🔐 Admin Dashboard - View Submissions
+          </Button>
+          <Button variant="outlined" size="small" onClick={() => (window.location.href = '/admin-dashboard.html')}>
+            📊 Direct Dashboard Access
           </Button>
         </Box>
       </Container>
@@ -1158,9 +2218,40 @@ function App() {
           },
         },
       },
+      MuiCssBaseline: {
+        styleOverrides: `
+          @keyframes slideInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes glow {
+            from { text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+            to { text-shadow: 0 2px 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.3); }
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `,
+      },
     },
   });
 
+  const isAdminRoute = typeof window !== 'undefined' && window.location.pathname === '/admin';
+
+  if (isAdminRoute) {
+    return <AdminRedirect />;
+  }
 
   return (
     <ThemeProvider theme={muiTheme}>

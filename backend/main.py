@@ -303,11 +303,61 @@ async def download_excel():
     try:
         headers, rows = sheets_get_all_rows() or (None, None)
         if headers is not None:
+            # Normalize to dashboard-friendly headers
+            export_headers = [
+                "Submitted At",
+                "Participant",
+                "Email",
+                "Role",
+                "Training Title",
+                "Instructor",
+                "Avg Rating",
+                "Topics Covered",
+                "Comments",
+            ]
+
+            def _safe_num(v):
+                try:
+                    n = float(v)
+                    return n
+                except Exception:
+                    return None
+
             wb = Workbook()
             ws = wb.active
-            ws.append(headers)
+            ws.append(export_headers)
+
             for r in rows:
-                ws.append(r)
+                r = r or []
+                submitted = r[0] if len(r) > 0 else ""
+                name = r[2] if len(r) > 2 else ""
+                email = r[3] if len(r) > 3 else ""
+                role = r[4] if len(r) > 4 else ""
+                title = r[5] if len(r) > 5 else ""
+                instructor = r[6] if len(r) > 6 else ""
+                # Prefer overall average at index 10 if present; otherwise compute simple mean of numeric cells
+                overall = _safe_num(r[10]) if len(r) > 10 else None
+                if overall is None:
+                    nums = []
+                    for v in r:
+                        n = _safe_num(v)
+                        if n is not None and n > 0:
+                            nums.append(n)
+                    overall = round(sum(nums) / len(nums), 1) if nums else ""
+                topics = r[11] if len(r) > 11 else ""
+                comments = r[13] if len(r) > 13 else ""
+
+                ws.append([
+                    submitted,
+                    name,
+                    email,
+                    role,
+                    title,
+                    instructor,
+                    overall,
+                    topics,
+                    comments,
+                ])
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
             wb.save(tmp.name)
             tmp.close()
@@ -319,8 +369,46 @@ async def download_excel():
 
         # Fallback to legacy Excel file if present
         if os.path.exists(EXCEL_FILE):
+            # Rebuild a normalized export from the legacy workbook
+            from openpyxl import load_workbook as _load
+            wb_in = _load(EXCEL_FILE)
+            ws_in = wb_in.active
+            data = list(ws_in.iter_rows(values_only=True))
+            legacy_headers = data[0] if data else []
+            legacy_rows = data[1:] if len(data) > 1 else []
+
+            export_headers = [
+                "Submitted At",
+                "Participant",
+                "Email",
+                "Role",
+                "Training Title",
+                "Instructor",
+                "Avg Rating",
+                "Topics Covered",
+                "Comments",
+            ]
+            wb = Workbook()
+            ws = wb.active
+            ws.append(export_headers)
+            for r in legacy_rows:
+                r = list(r)
+                submitted = r[0] if len(r) > 0 else ""
+                name = r[2] if len(r) > 2 else ""
+                email = r[3] if len(r) > 3 else ""
+                role = r[4] if len(r) > 4 else ""
+                title = r[5] if len(r) > 5 else ""
+                instructor = r[6] if len(r) > 6 else ""
+                overall = r[10] if len(r) > 10 else ""
+                topics = r[11] if len(r) > 11 else ""
+                comments = r[13] if len(r) > 13 else ""
+                ws.append([submitted, name, email, role, title, instructor, overall, topics, comments])
+
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+            wb.save(tmp.name)
+            tmp.close()
             return FileResponse(
-                path=EXCEL_FILE,
+                path=tmp.name,
                 filename="Training_Feedback_Data.xlsx",
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
