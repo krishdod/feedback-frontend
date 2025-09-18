@@ -19,6 +19,10 @@ from googleapiclient.discovery import build
 app = FastAPI()
 print("🚀 FastAPI is initializing...")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "message": "Backend is running"}
+
 
 # Allow all origins for now (customize later)
 app.add_middleware(
