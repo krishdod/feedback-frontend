@@ -1051,24 +1051,8 @@
     </div>
 
     <script>
-        // Dynamic API URL - works for both local and production
-        const API_BASE_URL = (() => {
-            const hostname = window.location.hostname;
-            const protocol = window.location.protocol;
-            
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                return 'http://localhost:9000';
-            } else if (hostname.includes('render.com')) {
-                // If frontend is on Render, backend should be on same domain with different port
-                return `${protocol}//${hostname.replace('feedback-frontend', 'feedback-backend')}`;
-            } else if (hostname.includes('vercel.app')) {
-                // If frontend is on Vercel, use the Render backend
-                return 'https://feedback-backend-vkzb.onrender.com';
-            } else {
-                // Fallback for other deployments - you can customize this
-                return 'https://feedback-backend-vkzb.onrender.com';
-            }
-        })();
+        // HARDCODED API URL - Force correct backend
+        const API_BASE_URL = 'https://feedback-backend-vkzb.onrender.com';
         
         // Debug: Log the API URL being used
         console.log('🌐 Using API URL:', API_BASE_URL);
