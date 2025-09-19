@@ -12,11 +12,11 @@
   "routes": [
     {
       "src": "/admin",
-      "dest": "/admin-dashboard.html"
+      "dest": "/admin-dashboard-clean.html"
     },
     {
       "src": "/admin-dashboard.html",
-      "dest": "/admin-dashboard.html"
+      "dest": "/admin-dashboard-clean.html"
     },
     {
       "src": "/(.*)",
