@@ -511,6 +511,5 @@ async def submit_feedback(form: FeedbackForm):
 
 if __name__ == "__main__":
     import uvicorn
+    print("✅ FastAPI loaded successfully")
     uvicorn.run(app, host="0.0.0.0", port=9000)
-
-print("✅ FastAPI loaded successfully")

@@ -6,10 +6,14 @@ services:
     plan: free
     rootDir: backend
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python main.py"
+    startCommand: "python start.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
+      - key: GOOGLE_SHEETS_SPREADSHEET_ID
+        value: "1BYCStdQILVx8DHFxeRWe5jlISGxgSWikHyuUy_NgoMY"
+      - key: GOOGLE_SHEETS_TAB_NAME
+        value: "Sheet1"
     healthCheckPath: /health
 
   # Frontend Static Site
