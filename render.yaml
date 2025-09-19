@@ -4,8 +4,9 @@ services:
     name: feedback-backend
     env: python
     plan: free
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && python main.py"
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
@@ -16,8 +17,9 @@ services:
     name: feedback-frontend
     env: static
     plan: free
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: ./frontend/build
+    rootDir: frontend
+    buildCommand: "npm ci || npm i && npm run build"
+    staticPublishPath: build
     routes:
       - type: rewrite
         source: /admin
