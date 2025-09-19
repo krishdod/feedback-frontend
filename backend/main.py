@@ -257,7 +257,12 @@ class FeedbackForm(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Training Feedback API is running!", "endpoints": ["/submit-feedback", "/view-data", "/download-excel", "/docs"]}
+    return {
+        "message": "Training Feedback API is running!", 
+        "endpoints": ["/submit-feedback", "/view-data", "/download-excel", "/docs", "/health"],
+        "status": "healthy",
+        "version": "1.0.0"
+    }
 
 @app.get("/health")
 async def health_check():
@@ -272,8 +277,13 @@ async def health_check():
 async def view_data():
     """View all stored feedback data from Google Sheets if configured; fallback to Excel."""
     try:
+        print("🔍 /view-data endpoint called")
+        print(f"📊 Google Sheets ID: {GOOGLE_SHEETS_SPREADSHEET_ID}")
+        print(f"📋 Google Sheets Tab: {GOOGLE_SHEETS_TAB_NAME}")
+        
         headers, rows = sheets_get_all_rows() or (None, None)
         if headers is not None:
+            print(f"✅ Google Sheets data loaded: {len(rows)} rows")
             return {
                 "status": "success",
                 "total_submissions": len(rows),
@@ -511,5 +521,7 @@ async def submit_feedback(form: FeedbackForm):
 
 if __name__ == "__main__":
     import uvicorn
+    import os
     print("✅ FastAPI loaded successfully")
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    port = int(os.environ.get("PORT", 9000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

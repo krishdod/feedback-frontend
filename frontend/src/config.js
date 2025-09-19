@@ -7,18 +7,18 @@ const getApiBaseUrl = () => {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:9000';
     } else if (hostname.includes('vercel.app')) {
-      return 'https://feedback-backend-8q8h.onrender.com';
+      return 'https://feedback-backend-vkzb.onrender.com';
     } else if (hostname.includes('render.com')) {
       return `https://${hostname.replace('feedback-frontend', 'feedback-backend')}`;
     } else {
-      return 'https://feedback-backend-8q8h.onrender.com';
+      return 'https://feedback-backend-vkzb.onrender.com';
     }
   }
   
   // Fallback for server-side rendering
   return process.env.NODE_ENV === 'development' 
     ? 'http://localhost:9000' 
-    : 'https://feedback-backend-8q8h.onrender.com';
+    : 'https://feedback-backend-vkzb.onrender.com';
 };
 
 // Export the API configuration
