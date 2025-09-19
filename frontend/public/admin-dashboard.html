@@ -1058,6 +1058,9 @@
             } else if (hostname.includes('render.com')) {
                 // If frontend is on Render, backend should be on same domain with different port
                 return `${protocol}//${hostname.replace('feedback-frontend', 'feedback-backend')}`;
+            } else if (hostname.includes('vercel.app')) {
+                // If frontend is on Vercel, use the Render backend
+                return 'https://feedback-backend-8q8h.onrender.com';
             } else {
                 // Fallback for other deployments - you can customize this
                 return 'https://feedback-backend-8q8h.onrender.com';

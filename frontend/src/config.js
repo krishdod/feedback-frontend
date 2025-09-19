@@ -1,20 +1,30 @@
-// Configuration for API endpoints
-const config = {
-  // Development environment (local)
-  development: {
-    apiUrl: 'http://127.0.0.1:9000'
-  },
-  // Production environment (deployed)
-  production: {
-    apiUrl: 'https://feedback-backend-vkzb.onrender.com'
+// Dynamic API URL detection
+const getApiBaseUrl = () => {
+  // Check if we're in browser environment
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:9000';
+    } else if (hostname.includes('vercel.app')) {
+      return 'https://feedback-backend-8q8h.onrender.com';
+    } else if (hostname.includes('render.com')) {
+      return `https://${hostname.replace('feedback-frontend', 'feedback-backend')}`;
+    } else {
+      return 'https://feedback-backend-8q8h.onrender.com';
+    }
   }
+  
+  // Fallback for server-side rendering
+  return process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:9000' 
+    : 'https://feedback-backend-8q8h.onrender.com';
 };
 
-// Get current environment
-const environment = process.env.NODE_ENV || 'development';
-
-// Export the appropriate configuration
-export const apiConfig = config[environment];
+// Export the API configuration
+export const apiConfig = {
+  apiUrl: getApiBaseUrl()
+};
 
 // Helper function to get the full API URL
 export const getApiUrl = (endpoint) => {
